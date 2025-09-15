@@ -1,20 +1,10 @@
 <?php
 /**
  * Plugin Name: heo → WooCommerce Importer
- * Description: Imports & syncs products, prices, and stock from heo Retailer API into WooCommerce. Async (one-by-one) imports via Action Scheduler to avoid 500s. Robust brand mapping (from manufacturers EN) + full pagination using API meta. Auto-hydrates missing fields (e.g., manufacturers) in worker.
- * Version: 1.4.1
- * Author: Jaman Forazi + Bijoy
- *
- * 1.4.1
- * - FIX: Worker now HYDRATES product if required fields (e.g., manufacturers) are missing in the queued payload. Brand assignment now works even when list pages don't include manufacturers.
- *
- * 1.4.0
- * - Brand extracted from manufacturers[].translations[EN] with fallback; writes into Brand taxonomy (prefers slug `brand`, then `product_brand`, then `pa_brand`).
- * - Async seeding uses API pagination.totalPages to schedule all pages.
- * - Keeps `manufacturers` in job payload when present.
- *
- * 1.3.3
- * - “Clear Log” button, Action Scheduler arg hardening, 403 hardening.
+ * Description: Imports & syncs products.
+ * Version: 2.0.0
+ * Author: Bijoy
+ * Author URI: https://bijoy.dev
  */
 
 if ( ! defined('ABSPATH') ) exit;
@@ -332,7 +322,7 @@ class HEO_WC_Importer {
         if ($desc !== '') wp_update_post(['ID'=> $product_id, 'post_content'=> $desc]);
 
         if ($price !== null && $price !== '') {
-            $final_price = $this->apply_price_multiplier((float)$price);
+            $final_price = (float)$price;
             $product->set_regular_price(wc_format_decimal($final_price));
             $product->set_price(wc_format_decimal($final_price));
         }
@@ -353,19 +343,6 @@ class HEO_WC_Importer {
         $gotCats  = $this->map_terms($product_id, $p);
 
         return $product_id;
-    }
-
-    /* ---------- Price helper ---------- */
-
-    private function get_price_multiplier() : float {
-        $o = get_option(self::OPT, []);
-        $pm = isset($o['price_multiplier']) ? (float)$o['price_multiplier'] : 1.0;
-        return $pm > 0 ? $pm : 1.0;
-    }
-    private function apply_price_multiplier(float $price) : float {
-        $pm = $this->get_price_multiplier();
-        $dec = function_exists('wc_get_price_decimals') ? wc_get_price_decimals() : 2;
-        return round($price * $pm, is_numeric($dec) ? (int)$dec : 2);
     }
 
     /* ---------- Extractors ---------- */
@@ -1137,46 +1114,6 @@ add_action('woocommerce_thankyou', function($order_id){
 }, 20);
 
 
-
-
-
-
-add_filter('woocommerce_product_get_price', 'custom_dynamic_price', 20, 2);
-add_filter('woocommerce_product_get_regular_price', 'custom_dynamic_price', 20, 2);
-add_filter('woocommerce_product_get_sale_price', 'custom_dynamic_price', 20, 2);
-
-function custom_dynamic_price($price, $product) {
-    // if (is_admin()) return $price; // keep backend unchanged
-    // var_export($product);
-    // $brand = '';s
-    // $terms = wp_get_post_terms($product->get_id(), 'pa_brand');
-    // if (!is_wp_error($terms) && !empty($terms)) {
-    //     $brand = strtolower($terms[0]->name);
-    // }
-
-    // $price = floatval($price);
-
-    // // Example rules
-    // if ($brand === 'nike') {
-    //     $price = $price * 1.2; // 20% markup
-    // } elseif ($brand === 'adidas') {
-    //     $price = $price * 1.15;
-    // }
-
-    // // Extra rule: if price > 100
-    // if ($price > 100) {
-    //     $price = $price * 1.05;
-    // }
-
-    return 50;
-}
-
-
-
-
-
-
-
 /* ---------- Render on Edit Brand screen ---------- */
 add_action('product_brand_edit_form_fields', function($term){
     $meta_key = '_brand_price_range_multipliers';
@@ -1353,23 +1290,58 @@ add_action('edited_product_brand', function($term_id){
 }, 10, 1);
 
 /* ---------- helper to read back later ---------- */
-if ( ! function_exists( 'ft_get_brand_price_ranges' ) ) {
-    function ft_get_brand_price_ranges( $brand ) {
-        if ( is_numeric( $brand ) ) {
-            $term_id = (int) $brand;
-        } else { 
-            $term = get_term_by( 'slug', $brand, 'product_brand' );
-            if ( ! $term ) $term = get_term_by( 'name', $brand, 'product_brand' );
-            if ( ! $term || is_wp_error( $term ) ) return []; 
-            $term_id = (int) $term->term_id;
-        }
-
-        $rows = get_term_meta( $term_id, '_brand_price_range_multipliers', true );
-        return is_array( $rows ) ? $rows : [];
+function ft_get_brand_price_ranges( $brand ) {
+    if ( is_numeric( $brand ) ) {
+        $term_id = (int) $brand;
+    } else { 
+        $term = get_term_by( 'slug', $brand, 'product_brand' );
+        if ( ! $term ) $term = get_term_by( 'name', $brand, 'product_brand' );
+        if ( ! $term || is_wp_error( $term ) ) return []; 
+        $term_id = (int) $term->term_id;
     }
+
+    $rows = get_term_meta( $term_id, '_brand_price_range_multipliers', true );
+    return is_array( $rows ) ? $rows : null;
 }
 
- 
-add_action( "wp_head", function(){
-    var_export( ft_get_brand_price_ranges('1010 China'));
-} );
+
+add_filter('woocommerce_product_get_price', 'custom_dynamic_price', 20, 2);
+add_filter('woocommerce_product_get_regular_price', 'custom_dynamic_price', 20, 2);
+add_filter('woocommerce_product_get_sale_price', 'custom_dynamic_price', 20, 2);
+
+function custom_dynamic_price($price, $product) {
+    // if (is_admin()) return $price; // keep backend unchanged
+
+    $product_id = $product->get_id();
+    $brands = wp_get_post_terms($product_id, 'product_brand');
+
+    if(!empty($brands) && isset($brands[0]->name)){
+        $price_renge = ft_get_brand_price_ranges($brands[0]->term_id);
+        if(is_array($price_renge)){
+
+            foreach($price_renge as $range){
+                $start = isset($range['start']) ? floatval($range['start']) : null;
+                $end = isset($range['end']) && $range['end'] !== '' ? floatval($range['end']) : null;
+                $multiplier = isset($range['multiplier']) ? floatval($range['multiplier']) : null;
+
+                if ($start !== null && $multiplier !== null) {
+                    if ($end === null) {
+                        // Open-ended range
+                        if ($price >= $start) {
+                            $price = round($price * $multiplier, 2);
+                            break; // Apply only the first matching range
+                        }
+                    } else {
+                        // Closed range
+                        if ($price >= $start && $price <= $end) {
+                            $price = round($price * $multiplier, 2);
+                            break; // Apply only the first matching range
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    return $price;
+}
