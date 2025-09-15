@@ -606,10 +606,11 @@ class HEO_WC_Importer {
         $cats = array_values(array_filter(array_map('trim', $cats)));
         $fixed = [];
         foreach ($cats as $label) {
-            if ($label === '&' || strpos($label, '& ') === 0) {
-                if (!empty($fixed)) { $fixed[count($fixed)-1] = trim($fixed[count($fixed)-1] . ' ' . $label); }
-                else { $fixed[] = $label; }
-            } else { $fixed[] = $label; }
+            $devide_arr = explode("&", $label);
+            foreach ($devide_arr as $each_cat){
+                $each_cat = trim($each_cat);
+                if($each_cat) $fixed[] = $each_cat;
+            }
         }
         return array_values(array_unique($fixed));
     }
