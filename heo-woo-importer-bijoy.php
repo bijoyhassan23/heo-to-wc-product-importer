@@ -75,7 +75,6 @@ class HEO_WC_Importer {
             'force_instock'   => 1,
             'image_base'      => '',
             'force_https'     => 1,
-            'price_multiplier'=> 1.0,
         ];
         $opts = wp_parse_args($opts, $defaults);
 
@@ -88,11 +87,6 @@ class HEO_WC_Importer {
         $opts['force_instock']   = !empty($opts['force_instock']) ? 1 : 0;
         $opts['image_base']      = esc_url_raw(trim((string)($opts['image_base'] ?? '')));
         $opts['force_https']     = !empty($opts['force_https']) ? 1 : 0;
-
-        $pm = isset($opts['price_multiplier']) && $opts['price_multiplier'] !== '' ? (float)$opts['price_multiplier'] : 1.0;
-        if ($pm <= 0) $pm = 1.0;
-        if ($pm > 100) $pm = 100.0;
-        $opts['price_multiplier'] = $pm;
 
         $this->maybe_reschedule($opts['schedule']);
         return $opts;
@@ -113,7 +107,6 @@ class HEO_WC_Importer {
         $force_in = !empty($o['force_instock']);
         $img_base = $o['image_base'] ?? '';
         $force_https = !empty($o['force_https']);
-        $price_multiplier = isset($o['price_multiplier']) ? (float)$o['price_multiplier'] : 1.0;
         $log = get_transient(self::LOG_TRANSIENT);
         ?>
         <div class="wrap">
@@ -130,13 +123,6 @@ class HEO_WC_Importer {
                     <tr><th scope="row"><label>Force In-Stock if quantity unknown</label></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[force_instock]" value="1" <?php checked($force_in, true); ?>> Yes</label></td></tr>
                     <tr><th scope="row"><label>Image Base URL (for relative paths)</label></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[image_base]" value="<?php echo esc_attr($img_base); ?>" class="regular-text" placeholder="https://integrate.heo.com"></td></tr>
                     <tr><th scope="row"><label>Force HTTPS for images</label></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[force_https]" value="1" <?php checked($force_https, true); ?>> Yes</label></td></tr>
-                    <tr>
-                        <th scope="row"><label>Price Multiplier</label></th>
-                        <td>
-                            <input type="number" step="0.01" min="0.01" name="<?php echo esc_attr(self::OPT); ?>[price_multiplier]" value="<?php echo esc_attr($price_multiplier); ?>" class="small-text">
-                            <p class="description">Multiply imported prices by this number (e.g., <code>1.20</code> adds 20%).</p>
-                        </td>
-                    </tr>
                 </table>
                 <?php submit_button('Save Settings'); ?>
             </form>
@@ -1371,7 +1357,7 @@ if ( ! function_exists( 'ft_get_brand_price_ranges' ) ) {
     function ft_get_brand_price_ranges( $brand ) {
         if ( is_numeric( $brand ) ) {
             $term_id = (int) $brand;
-        } else {
+        } else { 
             $term = get_term_by( 'slug', $brand, 'product_brand' );
             if ( ! $term ) $term = get_term_by( 'name', $brand, 'product_brand' );
             if ( ! $term || is_wp_error( $term ) ) return []; 
