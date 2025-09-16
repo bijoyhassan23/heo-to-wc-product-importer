@@ -97,6 +97,7 @@ class HEO_WC_Importer {
         $force_in = !empty($o['force_instock']);
         $img_base = $o['image_base'] ?? '';
         $force_https = !empty($o['force_https']);
+        $defult_price_multiplier = $o['defult_price_multiplier'] ?? '';
         $log = get_transient(self::LOG_TRANSIENT);
         ?>
         <div class="wrap">
@@ -113,6 +114,112 @@ class HEO_WC_Importer {
                     <tr><th scope="row"><label>Force In-Stock if quantity unknown</label></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[force_instock]" value="1" <?php checked($force_in, true); ?>> Yes</label></td></tr>
                     <tr><th scope="row"><label>Image Base URL (for relative paths)</label></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[image_base]" value="<?php echo esc_attr($img_base); ?>" class="regular-text" placeholder="https://integrate.heo.com"></td></tr>
                     <tr><th scope="row"><label>Force HTTPS for images</label></th><td><label><input type="checkbox" name="<?php echo esc_attr(self::OPT); ?>[force_https]" value="1" <?php checked($force_https, true); ?>> Yes</label></td></tr>
+                    <!-- Price Multiplier -->
+                    <tr>
+                        <th scope="row"><label>Default Price Multiplier</label></th>
+                        <td>
+                            <input type="hidden" name="<?php echo esc_attr(self::OPT); ?>[defult_price_multiplier]" value="<?php echo esc_attr($defult_price_multiplier); ?>">
+                            <p class="description" style="margin-top:0">
+                                Define discount tiers for this brand using price ranges and a multiply factor (e.g., 1.95). Leave <em>End</em> empty for open-ended range.
+                            </p>
+                            <style>
+                                #ft-price-range-table th { text-align: left; }
+                                #ft-price-range-table th, #ft-price-range-table td { padding: 8px 6px; }
+                                #ft-price-range-table th { background: #f1f1f1; }
+                                #ft-price-range-table tr:nth-child(even) { background: #fafafa; }
+                                #ft-price-range-table tr:hover { background: #ffffe0; }
+                            </style>
+                            <table class="widefat striped" id="ft-price-range-table" style="max-width:960px;margin-top:8px">
+                                <thead>
+                                    <tr>
+                                        <th style="width:28%">Start price</th>
+                                        <th style="width:28%">End price</th>
+                                        <th style="width:28%">Multiply</th>
+                                        <th style="width:16%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                </tbody>
+                            </table>
+
+                            <p style="margin-top:8px">
+                                <button type="button" class="button button-secondary" id="ft-row-add">+ Add range</button>
+                            </p>
+
+                            <style>
+                                #ft-price-range-table input.regular-text { width: 100%; }
+                                #ft-price-range-table td, #ft-price-range-table th { vertical-align: middle; }
+                                #ft-price-range-table .ft-pr-row.removed { opacity: 0.5; }
+                            </style>
+
+                            <script>
+                                (function(){
+                                    const table = document.getElementById('ft-price-range-table');
+                                    const tbody = table.querySelector('tbody');
+                                    const addBtn = document.getElementById('ft-row-add');
+                                    const defultPriceMultiplierIn = document.querySelector('[name="heo_wc_importer_settings[defult_price_multiplier]"]');
+
+                                    function makeRow(values){
+                                        const tr = document.createElement('tr');
+                                        tr.className = 'ft-pr-row';
+                                        tr.innerHTML = `
+                                            <td><input type="number" step="0.01" min="0" placeholder="0.00"
+                                                    name="ft_price_rows[start][]" value="${values?.start ?? ''}" class="regular-text"></td>
+                                            <td><input type="number" step="0.01" min="0" placeholder="e.g. 9.99 (or leave empty)"
+                                                    name="ft_price_rows[end][]" value="${values?.end ?? ''}" class="regular-text"></td>
+                                            <td><input type="number" step="0.01" min="0" placeholder="e.g. 1.95"
+                                                    name="ft_price_rows[multiplier][]" value="${values?.multiplier ?? ''}" class="regular-text"></td>
+                                            <td><button type="button" class="button ft-row-remove" aria-label="Remove row">Remove</button></td>
+                                        `;
+
+                                        tr.querySelector('[name="ft_price_rows[start][]"]').addEventListener('input', defaultMult);
+                                        tr.querySelector('[name="ft_price_rows[end][]"]').addEventListener('input', defaultMult);
+                                        tr.querySelector('[name="ft_price_rows[multiplier][]"]').addEventListener('input', defaultMult);
+                                        return tr;
+                                    }
+
+                                    addBtn.addEventListener('click', function(){
+                                        tbody.appendChild(makeRow());
+                                    });
+
+                                    function defaultMult(){
+                                        const defaultMultData = [];
+                                        table.querySelectorAll('.ft-pr-row').forEach(function (item) {
+                                            let eachMult = {
+                                                start: item.querySelector('[name="ft_price_rows[start][]"]').value,
+                                                end: item.querySelector('[name="ft_price_rows[end][]"]').value,
+                                                multiplier: item.querySelector('[name="ft_price_rows[multiplier][]"]').value,
+                                            };
+                                            defaultMultData.push(eachMult);
+                                        });
+                                        defultPriceMultiplierIn.value = JSON.stringify(defaultMultData);
+                                    }
+
+                                    tbody.addEventListener('click', function(e){
+                                        if (e.target && e.target.classList.contains('ft-row-remove')) {
+                                            const rows = tbody.querySelectorAll('.ft-pr-row');
+                                            if (rows.length > 1) {
+                                                e.target.closest('.ft-pr-row').remove();
+                                            } else {
+                                                // If only 1 row left, just clear its inputs instead of removing
+                                                const inputs = e.target.closest('.ft-pr-row').querySelectorAll('input');
+                                                inputs.forEach(i => i.value = '');
+                                            }
+                                            defaultMult();
+                                        }
+                                    });
+
+                                    (() => {
+                                        let initialData = JSON.parse(defultPriceMultiplierIn.value || '[]');
+                                        initialData.forEach(item => {
+                                            tbody.appendChild(makeRow(item));
+                                        });
+                                    })()
+                                })();
+                            </script>
+                        </td>
+                    </tr>
                 </table>
                 <?php submit_button('Save Settings'); ?>
             </form>
@@ -1306,6 +1413,31 @@ function ft_get_brand_price_ranges( $brand ) {
 }
 
 
+function update_price_from_array($price, $ranges) {
+    if (!is_array($ranges)) return $price;
+
+    foreach ($ranges as $range) {
+        $start = isset($range['start']) ? floatval($range['start']) : null;
+        $end = isset($range['end']) && $range['end'] !== '' ? floatval($range['end']) : null;
+        $multiplier = isset($range['multiplier']) ? floatval($range['multiplier']) : null;
+
+        if ($start !== null && $multiplier !== null && $multiplier > 0) {
+            if ($end === null) {
+                // Open-ended range
+                if ($price >= $start) {
+                    return round($price * $multiplier, 2);
+                }
+            } else {
+                // Closed range
+                if ($price >= $start && $price <= $end) {
+                    return round($price * $multiplier, 2);
+                }
+            }
+        }
+    }
+    return $price;
+}
+
 add_filter('woocommerce_product_get_price', 'custom_dynamic_price', 20, 2);
 add_filter('woocommerce_product_get_regular_price', 'custom_dynamic_price', 20, 2);
 add_filter('woocommerce_product_get_sale_price', 'custom_dynamic_price', 20, 2);
@@ -1313,36 +1445,33 @@ add_filter('woocommerce_product_get_sale_price', 'custom_dynamic_price', 20, 2);
 function custom_dynamic_price($price, $product) {
     // if (is_admin()) return $price; // keep backend unchanged
 
+    $is_price_update = false;
+
     $product_id = $product->get_id();
     $brands = wp_get_post_terms($product_id, 'product_brand');
 
     if(!empty($brands) && isset($brands[0]->name)){
         $price_renge = ft_get_brand_price_ranges($brands[0]->term_id);
-        if(is_array($price_renge)){
-
-            foreach($price_renge as $range){
-                $start = isset($range['start']) ? floatval($range['start']) : null;
-                $end = isset($range['end']) && $range['end'] !== '' ? floatval($range['end']) : null;
-                $multiplier = isset($range['multiplier']) ? floatval($range['multiplier']) : null;
-
-                if ($start !== null && $multiplier !== null) {
-                    if ($end === null) {
-                        // Open-ended range
-                        if ($price >= $start) {
-                            $price = round($price * $multiplier, 2);
-                            break; // Apply only the first matching range
-                        }
-                    } else {
-                        // Closed range
-                        if ($price >= $start && $price <= $end) {
-                            $price = round($price * $multiplier, 2);
-                            break; // Apply only the first matching range
-                        }
-                    }
-                }
+        if(!empty($price_renge)){
+            $new_price = update_price_from_array($price, $price_renge);
+            if($new_price != $price){
+                $is_price_update = true;
+                $price = $new_price;
             }
         }
-
     }
+
+    if(!$is_price_update){
+        $o = get_option(HEO_WC_Importer::OPT, []);
+        $default_ranges = isset($o['defult_price_multiplier']) ? $o['defult_price_multiplier'] : [];
+        if(is_string($default_ranges)) $default_ranges = json_decode($default_ranges, true);
+        if(!empty($default_ranges)){
+            $new_price = update_price_from_array($price, $default_ranges);
+            if($new_price != $price){
+                $price = $new_price;
+            }
+        }
+    }
+
     return $price;
 }
