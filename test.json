@@ -1,218 +1,172 @@
 {
-  "productNumber": "ACT9138742",
+  "productNumber": "ACT913997",
   "name": [
     {
       "langIso2": "DE",
-      "translation": "Yu Yu Hakusho Actionfigur 1/6 Kazuma Kuwabara (Luxury Version) 30 cm"
+      "translation": "Yu Yu Hakusho Actionfigur 1/6 Kurama 30 cm"
     },
     {
       "langIso2": "EN",
-      "translation": "Yu Yu Hakusho Action Figure 1/6 Kazuma Kuwabara (Luxury Version) 30 cm"
+      "translation": "Yu Yu Hakusho Action Figure 1/6 Kurama 30 cm"
     },
     {
       "langIso2": "FR",
-      "translation": "Yu Yu Hakusho figurine 1/6 Kazuma Kuwabara (Luxury Version) 30 cm"
+      "translation": "Yu Yu Hakusho figurine 1/6 Kurama 30 cm"
     },
     {
       "langIso2": "ES",
-      "translation": "Yu Yu Hakusho Figura 1/6 Kazuma Kuwabara (Luxury Version) 30 cm"
+      "translation": "Yu Yu Hakusho Figura 1/6 Kurama 30 cm"
     }
   ],
   "description": [
     {
       "langIso2": "DE",
-      "translation": "Zu \"Yu Yu Hakusho\" kommt diese großartige Actionfigur. Sie ist ca. 30 cm groß, trägt echte Stoffkleidung und wird mit zahlreichen Austausch- und Zubehörteilen geliefert.\n\nDie \"Luxury Edition\" enthält einen zusätzlichen Körper und ein zweites \"Spirit Sword\"."
+      "translation": "Zu \"Yu Yu Hakusho\" kommt diese großartige Actionfigur. Sie ist ca. 30 cm groß, trägt echte Stoffkleidung und wird mit zahlreichen Austausch- und Zubehörteilen geliefert."
     },
     {
       "langIso2": "EN",
-      "translation": "From the classic YuYu Hakusho anime series comes the Kazuma Kuwabara (Luxury Edition) Sixth Scale Figure by Asmus Toys.\n\nThis figure features Kuwabara in a fully articulated body and has additional parts and accessories to create fun poses. The figure will be a terrific addition for any YuYu Hakusho fan's collection, don't miss your chance to order yours today!\n\nThe Luxury Edition features an additional Asmus body and a second Spirit Sword accessory."
+      "translation": "Sideshow and Asmus Collectible Toys are proud to present the Kurama Sixth Scale Figure!\n\nThis figure features Kurama in a fully articulated body and has additional parts and accessories to create fun poses, including an additional head sculpt.\n\nDon't miss your chance to add this Kurama Sixth Scale Figure to your YuYu Hakusho collection today!"
     },
     {
       "langIso2": "FR",
-      "translation": "Figurine articulée taille env. 30 cm et accessoires. Livrée en emballage boîte-fenêtre.\n\nLa « Luxury Edition » contient un corps supplémentaire et une deuxième « Spirit Sword »."
+      "translation": "Figurine articulée taille env. 30 cm et accessoires. Livrée en emballage boîte-fenêtre."
     },
     {
       "langIso2": "ES",
-      "translation": "Figura articulada de \"Yu Yu Hakusho\" en escala 1/6, tamaño aprox. 30 cm.\n\nLa \"Luxury Edition\" contiene un cuerpo adicional y una segunda \"Spirit Sword\"."
+      "translation": "Figura articulada de \"Yu Yu Hakusho\" en escala 1/6, tamaño aprox. 30 cm."
     }
   ],
   "prices": {
     "basePricePerUnit": {
-      "amount": "233.93",
+      "amount": "199.07",
       "currencyIsoCode": "EUR"
     },
     "suggestedRetailPricePerUnit": {
-      "amount": "329.0",
+      "amount": "279.0",
       "currencyIsoCode": "EUR"
     },
     "scaledDiscounts": []
   },
   "media": {
     "mainImage": {
-      "url": "https://www.heomedia.com/img/nrm/x_act9138742.jpg",
-      "fileSize": 30296,
+      "url": "https://www.heomedia.com/img/nrm/x_act913997.jpg",
+      "fileSize": 63761,
       "type": "IMAGE"
     },
     "thumbnailImage": {
-      "url": "https://www.heomedia.com/img/nrm/m_act9138742.jpg",
-      "fileSize": 3005,
+      "url": "https://www.heomedia.com/img/nrm/m_act913997.jpg",
+      "fileSize": 3206,
       "type": "IMAGE"
     },
     "additionalMedia": [
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_a.jpg",
-        "fileSize": 69060,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_a.jpg",
+        "fileSize": 54275,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_b.jpg",
-        "fileSize": 70234,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_b.jpg",
+        "fileSize": 77975,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_c.jpg",
-        "fileSize": 99963,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_c.jpg",
+        "fileSize": 67876,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_d.jpg",
-        "fileSize": 96507,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_d.jpg",
+        "fileSize": 87566,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_e.jpg",
-        "fileSize": 94754,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_e.jpg",
+        "fileSize": 79825,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_f.jpg",
-        "fileSize": 88735,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_f.jpg",
+        "fileSize": 83483,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_g.jpg",
-        "fileSize": 47089,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_g.jpg",
+        "fileSize": 89891,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_h.jpg",
-        "fileSize": 72649,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_h.jpg",
+        "fileSize": 74236,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_i.jpg",
-        "fileSize": 79690,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_i.jpg",
+        "fileSize": 47687,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_j.jpg",
-        "fileSize": 76499,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_j.jpg",
+        "fileSize": 51185,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_k.jpg",
-        "fileSize": 57182,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_k.jpg",
+        "fileSize": 71175,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_l.jpg",
-        "fileSize": 66378,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_l.jpg",
+        "fileSize": 60087,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_m.jpg",
-        "fileSize": 72938,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_m.jpg",
+        "fileSize": 63922,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_n.jpg",
-        "fileSize": 75443,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_n.jpg",
+        "fileSize": 70846,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_o.jpg",
-        "fileSize": 51701,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_o.jpg",
+        "fileSize": 80708,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_p.jpg",
-        "fileSize": 71653,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_p.jpg",
+        "fileSize": 70760,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_q.jpg",
-        "fileSize": 99934,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_q.jpg",
+        "fileSize": 69680,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_r.jpg",
-        "fileSize": 93578,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_r.jpg",
+        "fileSize": 70800,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_s.jpg",
-        "fileSize": 100025,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_s.jpg",
+        "fileSize": 89401,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_t.jpg",
-        "fileSize": 79476,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_t.jpg",
+        "fileSize": 95320,
         "type": "IMAGE"
       },
       {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_u.jpg",
-        "fileSize": 77194,
-        "type": "IMAGE"
-      },
-      {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_v.jpg",
-        "fileSize": 81659,
-        "type": "IMAGE"
-      },
-      {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_w.jpg",
-        "fileSize": 63929,
-        "type": "IMAGE"
-      },
-      {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_x.jpg",
-        "fileSize": 87203,
-        "type": "IMAGE"
-      },
-      {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_y.jpg",
-        "fileSize": 87530,
-        "type": "IMAGE"
-      },
-      {
-        "url": "https://www.heomedia.com/img/nrm/x_act9138742_z.jpg",
-        "fileSize": 122936,
+        "url": "https://www.heomedia.com/img/nrm/x_act913997_u.jpg",
+        "fileSize": 86047,
         "type": "IMAGE"
       }
     ]
   },
   "categories": [
-    {
-      "id": "46d62ac63f",
-      "translations": [
-        {
-          "langIso2": "DE",
-          "translation": "Toys"
-        },
-        {
-          "langIso2": "EN",
-          "translation": "Toys"
-        },
-        {
-          "langIso2": "FR",
-          "translation": "Toys"
-        },
-        {
-          "langIso2": "ES",
-          "translation": "Juguetes"
-        }
-      ]
-    },
     {
       "id": "a7a51e80b5",
       "translations": [
@@ -231,6 +185,29 @@
         {
           "langIso2": "ES",
           "translation": "Manga y Anime"
+        }
+      ]
+    }
+  ],
+  "manufacturers": [
+    {
+      "id": "3c17cf7c0a",
+      "translations": [
+        {
+          "langIso2": "DE",
+          "translation": "Asmus Collectible Toys"
+        },
+        {
+          "langIso2": "EN",
+          "translation": "Asmus Collectible Toys"
+        },
+        {
+          "langIso2": "FR",
+          "translation": "Asmus Collectible Toys"
+        },
+        {
+          "langIso2": "ES",
+          "translation": "Asmus Collectible Toys"
         }
       ]
     }

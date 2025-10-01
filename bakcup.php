@@ -21,7 +21,7 @@ class HEO_WC_Importer {
     // Action Scheduler
     const AS_GROUP   = 'heo_wc_importer_queue';
     const AS_SPACING = 5;    // seconds between single-product jobs
-    const MAX_ARG_BYTES = 80000; // if job args exceed this, schedule by SKU instead
+    const MAX_ARG_BYTES = 8000; // if job args exceed this, schedule by SKU instead
 
     public function __construct() {
         add_action('admin_menu', [$this, 'add_admin_page']);
@@ -63,7 +63,7 @@ class HEO_WC_Importer {
             'schedule'        => 'hourly',
             'paging_mode'     => 'pageNumber',
             'force_instock'   => 1,
-            'image_base'      => '', 
+            'image_base'      => '',
             'force_https'     => 1,
         ];
         $opts = wp_parse_args($opts, $defaults);
@@ -82,15 +82,8 @@ class HEO_WC_Importer {
         return $opts;
     }
 
-    private function trim_cred($s) { 
-        $s = (string)$s; 
-        $s = preg_replace("/[\r\n\t]+/", '', $s); 
-        return trim($s); 
-    }
-    private function maybe_reschedule($schedule) { 
-        wp_clear_scheduled_hook(self::CRON_HOOK); 
-        wp_schedule_event(time()+60, $schedule, self::CRON_HOOK); 
-    }
+    private function trim_cred($s) { $s = (string)$s; $s = preg_replace("/[\r\n\t]+/", '', $s); return trim($s); }
+    private function maybe_reschedule($schedule) { wp_clear_scheduled_hook(self::CRON_HOOK); wp_schedule_event(time()+60, $schedule, self::CRON_HOOK); }
 
     public function render_page() {
         if ( ! current_user_can('manage_woocommerce') ) return;
@@ -417,7 +410,7 @@ class HEO_WC_Importer {
             $this->log('❌ WooCommerce product classes missing.');
             return 0;
         }
-        $this->log('this is new p:-'.json_encode($p));
+
         $existing_id = wc_get_product_id_by_sku($sku);
         $product_id  = $existing_id ? $existing_id : 0;
         if (!$existing_id) {
@@ -533,7 +526,6 @@ class HEO_WC_Importer {
     /* ---------------- Images & Taxonomy ---------------- */
 
     private function import_images($product_id, array $p) : bool {
-        $this->log('B:- Image Import called for product '. $product_id);
         $why = []; $urls = $this->collect_image_urls($p, $why);
         if (!$urls) {
             if (!empty($why)) $this->log('🖼️ no image URLs: '.implode(' ; ', array_slice($why,0,6)));
@@ -864,10 +856,7 @@ class HEO_WC_Importer {
 
     private function probe_me() {
         $r = $this->api_get('/me');
-        if (!empty($r)) { 
-            $this->log('🔐 Auth probe OK on /me'); 
-            return true; 
-        }
+        if (!empty($r)) { $this->log('🔐 Auth probe OK on /me'); return true; }
         $this->log('🔐 Auth probe failed on /me (403 likely permissions or wrong password).');
         return false;
     }
@@ -997,53 +986,12 @@ class HEO_WC_Importer {
 
     /* ---------------- String/array utils ---------------- */
 
-    private function to_string($v) : string { 
-        if (is_string($v)) return trim($v);
-        if (is_numeric($v)) return (string)$v;
-        if (is_array($v)) { 
-            if (isset($v['text']) && is_string($v['text'])) return trim($v['text']);
-            if (isset($v['translation']) && is_string($v['translation'])) return trim($v['translation']);
-            return $this->flatten_strings($v);
-        } 
-        return ''; 
-    }
-
-    private function first_string() : string { 
-        $args = func_get_args(); 
-        foreach ($args as $v) { 
-            $s = $this->to_string($v); 
-            if ($s !== '') return $s; 
-        } 
-        return ''; 
-    }
-
-    private function flatten_strings($arr) : string { 
-        if (!is_array($arr)) return $this->to_string($arr); 
-        $out = []; 
-        $walker = function($node) use (&$out, &$walker) { 
-            if (is_string($node)) { 
-                $t = trim($node); 
-                if ($t !== '') $out[] = $t; 
-            } elseif (is_numeric($node)) { 
-                $out[] = (string)$node; 
-            } elseif (is_array($node)) { 
-                foreach ($node as $v) $walker($v); 
-            } 
-        }; 
-        $walker($arr); 
-        return $out ? implode(' ', array_slice($out, 0, 3)) : ''; 
-    }
-
+    private function to_string($v) : string { if (is_string($v)) return trim($v); if (is_numeric($v)) return (string)$v; if (is_array($v)) { if (isset($v['text']) && is_string($v['text'])) return trim($v['text']); if (isset($v['translation']) && is_string($v['translation'])) return trim($v['translation']); return $this->flatten_strings($v); } return ''; }
+    private function first_string() : string { $args = func_get_args(); foreach ($args as $v) { $s = $this->to_string($v); if ($s !== '') return $s; } return ''; }
+    private function flatten_strings($arr) : string { if (!is_array($arr)) return $this->to_string($arr); $out = []; $walker = function($node) use (&$out, &$walker) { if (is_string($node)) { $t = trim($node); if ($t !== '') $out[] = $t; } elseif (is_numeric($node)) { $out[] = (string)$node; } elseif (is_array($node)) { foreach ($node as $v) $walker($v); } }; $walker($arr); return $out ? implode(' ', array_slice($out, 0, 3)) : ''; }
     private function pick_localized(array $nodes, array $langs) : string {
         if ($this->is_assoc($nodes)) {
-            foreach ($langs as $lg){
-                foreach ($nodes as $k=>$v){
-                    if (strtolower($k) === strtolower($lg)) { 
-                        $s = $this->to_string($v); 
-                        if ($s !== '') return $s; 
-                    }            
-                }
-            }
+            foreach ($langs as $lg) foreach ($nodes as $k=>$v) if (strtolower($k) === strtolower($lg)) { $s = $this->to_string($v); if ($s !== '') return $s; }
         }
         foreach ($nodes as $node) {
             if (!is_array($node)) continue;
@@ -1057,19 +1005,8 @@ class HEO_WC_Importer {
         }
         return '';
     }
-    
-    private function is_assoc(array $arr) : bool { 
-        return array_keys($arr) !== range(0, count($arr) - 1); 
-    }
-
-    private function log($line) { 
-        $ts = date_i18n('Y-m-d H:i:s'); 
-        $prev = get_transient(self::LOG_TRANSIENT); 
-        $prev = $prev ? $prev."\n" : ''; 
-        $msg = '['.$ts.'] '.$line; 
-        set_transient(self::LOG_TRANSIENT, $prev.$msg, 12 * HOUR_IN_SECONDS); 
-        if (defined('WP_CLI') && WP_CLI) WP_CLI::log($line); 
-    }
+    private function is_assoc(array $arr) : bool { return array_keys($arr) !== range(0, count($arr) - 1); }
+    private function log($line) { $ts = date_i18n('Y-m-d H:i:s'); $prev = get_transient(self::LOG_TRANSIENT); $prev = $prev ? $prev."\n" : ''; $msg = '['.$ts.'] '.$line; set_transient(self::LOG_TRANSIENT, $prev.$msg, 12 * HOUR_IN_SECONDS); if (defined('WP_CLI') && WP_CLI) WP_CLI::log($line); }
 
     /* ---------------- Async Queue (Action Scheduler) ---------------- */
 
@@ -1085,7 +1022,6 @@ class HEO_WC_Importer {
 
     // Keep only fields we need in job args — INCLUDE manufacturers when present
     private function minify_product_payload(array $p) : array {
-        $this->log('before minified: '.json_encode($p));
         $keepKeys = [
             'productNumber','name','title','productName','description','longDescription','descriptionText','shortDescription',
             'prices','price','retailPrice',
@@ -1093,11 +1029,10 @@ class HEO_WC_Importer {
             'stockStatus','availabilityStatus','availabilityState','status',
             'images','image','imageUrl','thumbnailUrl','primaryImage','mainImage','media','assets','mediaGallery','pictures','gallery',
             'categories','category','categoryName','brand',
-            'manufacturers', 'preorderDeadline' // may be absent in list endpoints; worker hydrates if missing
+            'manufacturers', // may be absent in list endpoints; worker hydrates if missing
         ];
         $min = [];
         foreach ($keepKeys as $k) if (array_key_exists($k, $p)) $min[$k] = $p[$k];
-        $this->log('keycaps in payload: '.json_encode($min));
         return $min;
     }
 
@@ -1111,17 +1046,15 @@ class HEO_WC_Importer {
 
         if ($count === 0) { $this->log('… page '.$page.' empty; stopping seeding.'); return; }
 
-        $ts = time(); 
-        $i  = 0; 
-        $scheduledBySKU = 0;
+        $ts = time(); $i  = 0; $scheduledBySKU = 0;
         foreach ($products as $p) {
             if (!is_array($p)) continue;
             $sku = $this->to_string($p['productNumber'] ?? '');
             if ($sku === '') continue;
 
-            $this->log('x---: '.json_encode($p));
             $payload = $this->minify_product_payload($p);
             $jsonLen = strlen(wp_json_encode($payload));
+
             $run_at = $ts + ($i * self::AS_SPACING);
             if ($jsonLen > self::MAX_ARG_BYTES) { as_schedule_single_action($run_at, 'heo_wc_import_single', [ $sku ], self::AS_GROUP); $scheduledBySKU++; }
             else { as_schedule_single_action($run_at, 'heo_wc_import_single', [ $payload ], self::AS_GROUP); }
@@ -1183,8 +1116,10 @@ class HEO_WC_Importer {
 
         // >>> HYDRATE if required keys (e.g., manufacturers for Brand) are missing
         $p = $this->hydrate_product_if_needed($p, ['manufacturers']);
+
         $price = $this->extract_price_from_product($p);
         $stock = $this->extract_stock_from_product($p);
+
         $gotImage = false; $gotCats = false;
         $id = $this->upsert_product($p, $price, $stock, $gotImage, $gotCats);
         if ($id) $this->log('✅ Imported/updated SKU '.$sku.' → product #'.$id.' (img:'.($gotImage?'y':'n').', cats:'.($gotCats?'y':'n').')');

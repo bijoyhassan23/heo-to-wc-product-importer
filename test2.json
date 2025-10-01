@@ -1,0 +1,326 @@
+{
+  "productNumber": "1010CH-22-382",
+  "name": [
+    {
+      "langIso2": "DE",
+      "translation": "Dragon Age: Inquisition Artbook *Englische Version*   "
+    },
+    {
+      "langIso2": "EN",
+      "translation": "Dragon Age: Inquisition Art Book "
+    },
+    {
+      "langIso2": "FR",
+      "translation": "Dragon Age: Inquisition Art book *ANGLAIS*"
+    },
+    {
+      "langIso2": "ES",
+      "translation": "Dragon Age: Inquisition Artbook *INGLÉS*"
+    }
+  ],
+  "description": [
+    {
+      "langIso2": "DE",
+      "translation": "- Offiziell lizenziertes Artbook\n- Hardcover\n- 184 Seiten\n- Größe: 30 x 23 cm\n- Sprache: Englisch"
+    },
+    {
+      "langIso2": "EN",
+      "translation": "The next generation of fantasy is here! Go behind the scenes of Dragon Age: Inquisition,the most ambitious game ever created by legendary developer BioWare!\n\nFeaturing hundreds of never-before-seen art pieces and commentary from the developers themselves, this volume offers revealing insight into the inspiration and creation of every facet of Dragon Age: Inquisition, from the heroes to the wondrous weapons they wield, the powerful beasts they battle, and the extraordinary world they inhabit.\n\nFilled with never-before-seen art!\n\nCommentary by the creators of Dragon Age!\n\nFrom BioWare, developers of the hit Mass Effect series!\n\n- Officially licensed Art book\n- Hard cover\n- 184 pages\n- Size: 30 x 23 cm"
+    },
+    {
+      "langIso2": "FR",
+      "translation": "<strong>Version anglaise.</strong>\n\n- Art book sous licence officielle\n- Couverture rigide\n- 184 pages\n- Dimensions 30 x 23 cm"
+    },
+    {
+      "langIso2": "ES",
+      "translation": "- Artbook, licencia oficial\n- Encuadernación de tapa dura\n- 184 páginas\n- Idioma: inglés \n- Dimensiones: 30 x 23 cm"
+    }
+  ],
+  "dimensions": {
+    "manufacturerDimensions": {
+      "width": {
+        "value": 233,
+        "unit": "MILLIMETERS"
+      },
+      "length": {
+        "value": 313,
+        "unit": "MILLIMETERS"
+      },
+      "height": {
+        "value": 27,
+        "unit": "MILLIMETERS"
+      },
+      "weight": {
+        "value": 1767,
+        "unit": "GRAMS"
+      }
+    },
+    "validatedDimensions": {
+      "width": {
+        "value": 233,
+        "unit": "MILLIMETERS"
+      },
+      "length": {
+        "value": 313,
+        "unit": "MILLIMETERS"
+      },
+      "height": {
+        "value": 27,
+        "unit": "MILLIMETERS"
+      },
+      "weight": {
+        "value": 1767,
+        "unit": "GRAMS"
+      }
+    }
+  },
+  "countryOfOrigin": "CN",
+  "tariffNumber": "49019900",
+  "ageRating": 14,
+  "vatType": "REDUCED",
+  "releaseDate": null,
+  "media": {
+    "mainImage": {
+      "url": "https://www.heomedia.com/img/nrm/x_1010ch-22-382.jpg",
+      "fileSize": 104491,
+      "type": "IMAGE"
+    },
+    "thumbnailImage": {
+      "url": "https://www.heomedia.com/img/nrm/m_1010ch-22-382.jpg",
+      "fileSize": 4424,
+      "type": "IMAGE"
+    },
+    "additionalMedia": []
+  },
+  "categories": [
+    {
+      "id": "ed63b1e392",
+      "translations": [
+        {
+          "langIso2": "DE",
+          "translation": "Home & Gifts"
+        },
+        {
+          "langIso2": "EN",
+          "translation": "Home & Gifts"
+        },
+        {
+          "langIso2": "FR",
+          "translation": "Maison et cadeaux"
+        },
+        {
+          "langIso2": "ES",
+          "translation": "Decoración y regalos"
+        }
+      ]
+    }
+  ],
+  "themes": [
+    {
+      "id": "c97ad9d8c0",
+      "translations": [
+        {
+          "langIso2": "DE",
+          "translation": "Dragon Age"
+        },
+        {
+          "langIso2": "EN",
+          "translation": "Dragon Age"
+        },
+        {
+          "langIso2": "FR",
+          "translation": "Dragon Age"
+        },
+        {
+          "langIso2": "ES",
+          "translation": "Dragon Age"
+        }
+      ]
+    }
+  ],
+  "manufacturers": [
+    {
+      "id": "3a1f9141eb",
+      "translations": [
+        {
+          "langIso2": "DE",
+          "translation": "1010 China"
+        },
+        {
+          "langIso2": "EN",
+          "translation": "1010 China"
+        },
+        {
+          "langIso2": "FR",
+          "translation": "1010 China"
+        },
+        {
+          "langIso2": "ES",
+          "translation": "1010 China"
+        }
+      ]
+    }
+  ],
+  "types": [
+    {
+      "id": "ce1b66d0be",
+      "translations": [
+        {
+          "langIso2": "DE",
+          "translation": "Art Books"
+        },
+        {
+          "langIso2": "EN",
+          "translation": "Art books"
+        },
+        {
+          "langIso2": "FR",
+          "translation": "Art books"
+        },
+        {
+          "langIso2": "ES",
+          "translation": "Libros de Arte"
+        }
+      ]
+    }
+  ],
+  "specials": [],
+  "barcodes": [
+    {
+      "type": "GTIN",
+      "barcode": "9781616551865"
+    }
+  ],
+  "prices": {
+    "basePricePerUnit": {
+      "amount": "30.37",
+      "currencyIsoCode": "EUR"
+    },
+    "suggestedRetailPricePerUnit": {
+      "amount": "49.0",
+      "currencyIsoCode": "EUR"
+    },
+    "scaledDiscounts": []
+  },
+  "packaging": {
+    "packagingUnit": "PIECE",
+    "packagingQuantity": 1,
+    "packagingType": "MAGAZINE_OR_BOOKS_IN_FOIL"
+  },
+  "deliveryType": "REGULAR",
+  "isEndOfLife": false,
+  "preorderDeadline": null,
+  "mainProductNumber": null,
+  "gpsrSafetyLabels": {
+    "labels": [
+      {
+        "type": "AGE_RATING",
+        "value": "99",
+        "translations": [
+          {
+            "langIso2": "bg",
+            "translation": "Няма налични инструкции за безопасност."
+          },
+          {
+            "langIso2": "cs",
+            "translation": "Nejsou k dispozici žádné bezpečnostní pokyny."
+          },
+          {
+            "langIso2": "da",
+            "translation": "Ingen sikkerhedsinstruktioner tilgængelige."
+          },
+          {
+            "langIso2": "de",
+            "translation": "Keine Sicherheitshinweise vorhanden. "
+          },
+          {
+            "langIso2": "el",
+            "translation": "Δεν υπάρχουν διαθέσιμες οδηγίες ασφαλείας."
+          },
+          {
+            "langIso2": "en",
+            "translation": "No safety instructions available."
+          },
+          {
+            "langIso2": "es",
+            "translation": "No hay instrucciones de seguridad disponibles."
+          },
+          {
+            "langIso2": "et",
+            "translation": "Ohutusjuhised puuduvad."
+          },
+          {
+            "langIso2": "fi",
+            "translation": "Turvallisuusohjeita ei ole saatavilla."
+          },
+          {
+            "langIso2": "fr",
+            "translation": "Aucun avis de sécurité disponible."
+          },
+          {
+            "langIso2": "ga",
+            "translation": "Níl treoracha sábháilteachta ar fáil."
+          },
+          {
+            "langIso2": "hr",
+            "translation": "Nema dostupnih sigurnosnih uputa."
+          },
+          {
+            "langIso2": "hu",
+            "translation": "Nem állnak rendelkezésre biztonsági utasítások."
+          },
+          {
+            "langIso2": "it",
+            "translation": "Non sono disponibili istruzioni di sicurezza."
+          },
+          {
+            "langIso2": "lt",
+            "translation": "Saugos instrukcijų nėra."
+          },
+          {
+            "langIso2": "lv",
+            "translation": "Drošības instrukcijas nav pieejamas."
+          },
+          {
+            "langIso2": "mt",
+            "translation": "Ebda struzzjonijiet tas-sigurtà disponibbli."
+          },
+          {
+            "langIso2": "nl",
+            "translation": "Ingen sikkerhedsinstruktioner tilgængelige."
+          },
+          {
+            "langIso2": "pl",
+            "translation": "Brak instrukcji bezpieczeństwa."
+          },
+          {
+            "langIso2": "pt",
+            "translation": "Não existem instruções de segurança disponíveis."
+          },
+          {
+            "langIso2": "ro",
+            "translation": "Nu sunt disponibile instrucțiuni de siguranță."
+          },
+          {
+            "langIso2": "sk",
+            "translation": "Nie sú k dispozícii žiadne bezpečnostné pokyny."
+          },
+          {
+            "langIso2": "sl",
+            "translation": "Varnostna navodila niso na voljo."
+          },
+          {
+            "langIso2": "sv",
+            "translation": "Inga säkerhetsinstruktioner tillgängliga."
+          }
+        ]
+      }
+    ]
+  },
+  "gpsrDistributors": null,
+  "gpsrManufacturers": null,
+  "gpsrMedia": null,
+  "isGpsrCompliant": false,
+  "isMarketplaceCompliant": false,
+  "languageEditions": []
+}
