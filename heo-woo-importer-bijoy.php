@@ -383,10 +383,14 @@ class HEO_WC_Importer {
 
     private function insert_product_tax( array $term_names, string $taxonomy){
         $terms_ids = [];
-        foreach($term_names as $term_name){
-            $term = term_exists( $term_name, $taxonomy );
-            if ( !$term ) $term = wp_insert_term( $term_name, $taxonomy );
-            $terms_ids[] = is_array($term) ? (int)$term['term_id'] : (int)$term;
+        foreach($term_names as $term_name_com){
+            $term_name_com = explode("&", $term_name_com);
+            foreach($term_name_com as $term_name){
+                $term_name = trim($term_name);
+                $term = term_exists( $term_name, $taxonomy );
+                if ( !$term ) $term = wp_insert_term( $term_name, $taxonomy );
+                $terms_ids[] = is_array($term) ? (int)$term['term_id'] : (int)$term;
+            }
         }
         return $terms_ids;
     }
