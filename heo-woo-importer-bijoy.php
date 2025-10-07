@@ -12,17 +12,17 @@ if ( ! defined('ABSPATH') ) exit;
 
 
 class HEO_WC_Importer {
-    const OPT = 'heo_wc_importer_settings'; // Option name
+    const OPT = 'heo_wc_importer_settings'; // Option name 
     const CRON_HOOK = 'heo_wc_importer_cron_sync';
     const PAGE_SLUG = 'heo-wc-importer';
     const LOG_TRANSIENT = 'heo_wc_import_log';
-
+    
     const LANG_CODE = 'EN';
     
     const AS_GROUP   = 'heo_wc_importer_queue';
     const AS_SPACING = 40;
     const BATCH = 50;
-    
+
 
     public function __construct() {
         add_action('admin_menu', [$this, 'add_admin_page']);
@@ -744,7 +744,6 @@ class HEO_WC_Importer {
         }
         return $price;
     }
-
 
 }
 new HEO_WC_Importer();
