@@ -332,6 +332,7 @@ class HEO_WC_Importer {
         $minified_product['title'] =  $this->get_lan_data_from_array($p['name']);
         $minified_product['description'] =  $this->get_lan_data_from_array($p['description']);
         $minified_product['media'] = $p['media'];
+        $minified_product['isEndOfLife'] = $p['isEndOfLife'];
 
         $categories = [];
         foreach($p['categories'] as $cat){ $categories[] = $this->get_lan_data_from_array($cat['translations']); }
