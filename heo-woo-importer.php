@@ -9,8 +9,6 @@
 
 if ( ! defined('ABSPATH') ) exit;
 
-
-
 class HEO_WC_Importer {
     const OPT = 'heo_wc_importer_settings'; // Option name 
     const CRON_HOOK = 'heo_wc_importer_cron_sync';
