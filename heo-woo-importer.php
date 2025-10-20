@@ -2,7 +2,7 @@
 /**
  * Plugin Name: heo → WooCommerce Importer
  * Description: Imports & syncs products.
- * Version: 3.0.0
+ * Version: 3.0.2
  * Author: Bijoy
  * Author URI: https://bijoy.dev
  */
@@ -25,6 +25,8 @@ class HEO_WC_Importer {
     public function __construct() {
         add_action('admin_menu', [$this, 'add_admin_page']);
         add_action('admin_init', [$this, 'register_settings']);
+        
+        add_action('init', [$this, 'register_product_taxonomy']);
 
         add_action('admin_post_heo_clear_log',      [$this, 'handle_clear_log']);
 
@@ -40,9 +42,9 @@ class HEO_WC_Importer {
         add_filter('woocommerce_product_get_price', [$this, 'custom_dynamic_price'], 20, 2);
 
         // Preorder functionality
-        add_action('woocommerce_product_options_general_product_data', [$this, 'heo_add_custom_product_field']);
-        add_action('woocommerce_admin_process_product_object', [$this, 'heo_save_preorder_deadline_field']);
-
+        add_action('woocommerce_product_options_general_product_data', [$this, 'heo_add_custom_product_field_for_general']);
+        add_action('woocommerce_product_options_inventory_product_data', [$this, 'heo_add_custom_product_field_for_inventory']);
+        add_action('woocommerce_admin_process_product_object', [$this, 'heo_save_custom_field_data']);
     }
 
     public function add_admin_page() {
@@ -220,7 +222,6 @@ class HEO_WC_Importer {
             <?php endif; ?>
         </div>
         <?php
-        
     }
 
     public function register_settings(){
@@ -266,7 +267,7 @@ class HEO_WC_Importer {
         $this->upsert_product($p);
     }
 
-    public function heo_add_custom_product_field() {
+    public function heo_add_custom_product_field_for_general() {
         woocommerce_wp_text_input([
             'id'          => '_preorder_deadline',
             'label'       => __('Preorder Deadline', 'woocommerce'),
@@ -274,12 +275,95 @@ class HEO_WC_Importer {
             'description' => __('Select the deadline date for preorders.', 'woocommerce'),
             'type'        => 'date',
         ]);
+         woocommerce_wp_text_input([
+            'id'          => '_eta_deadline',
+            'label'       => __('ETA Deadline', 'woocommerce'),
+            'desc_tip'    => true,
+            'description' => __('Select the deadline date for ETA.', 'woocommerce'),
+            'type'        => 'date',
+        ]);
     }
 
-    public function heo_save_preorder_deadline_field($product) {
+    public function heo_add_custom_product_field_for_inventory() {
+        woocommerce_wp_text_input([
+            'id'          => '_product_barcode_type',
+            'label'       => __('Barcode Type', 'woocommerce'),
+            'desc_tip'    => true,
+            'description' => __('Enter the product barcode type.', 'woocommerce'),
+        ]);
+        woocommerce_wp_text_input([
+            'id'          => '_product_barcode',
+            'label'       => __('Product Barcode', 'woocommerce'),
+            'desc_tip'    => true,
+            'description' => __('Enter the product barcode.', 'woocommerce'),
+        ]);
+    }
+
+    public function heo_save_custom_field_data($product) {
         if (isset($_POST['_preorder_deadline'])) {
             $product->update_meta_data('_preorder_deadline', sanitize_text_field($_POST['_preorder_deadline']));
         }
+        if (isset($_POST['_eta_deadline'])) {
+            $product->update_meta_data('_eta_deadline', sanitize_text_field($_POST['_eta_deadline']));
+        }
+        if (isset($_POST['_product_barcode_type'])) {
+            $product->update_meta_data('_product_barcode_type', sanitize_text_field($_POST['_product_barcode_type']));
+        }
+        if (isset($_POST['_product_barcode'])) {
+            $product->update_meta_data('_product_barcode', sanitize_text_field($_POST['_product_barcode']));
+        }
+    }
+
+    public function register_product_taxonomy() {
+        $labels_series = [
+            'name'              => _x( 'Series', 'taxonomy general name', 'textdomain' ),
+            'singular_name'     => _x( 'Series', 'taxonomy singular name', 'textdomain' ),
+            'search_items'      => __( 'Search Series', 'textdomain' ),
+            'all_items'         => __( 'All Series', 'textdomain' ),
+            'parent_item'       => __( 'Parent Series', 'textdomain' ),
+            'parent_item_colon' => __( 'Parent Series:', 'textdomain' ),
+            'edit_item'         => __( 'Edit Series', 'textdomain' ),
+            'update_item'       => __( 'Update Series', 'textdomain' ),
+            'add_new_item'      => __( 'Add New Series', 'textdomain' ),
+            'new_item_name'     => __( 'New Series Name', 'textdomain' ),
+            'menu_name'         => __( 'Series', 'textdomain' ),
+        ];
+
+        $args_series = [
+            'hierarchical'      => true,
+            'labels'            => $labels_series,
+            'show_ui'           => true,
+            'show_admin_column' => true,
+            'query_var'         => true,
+            'rewrite'           => ['slug' => 'series'],
+        ];
+
+        register_taxonomy( 'series', ['product'], $args_series );
+
+        $labels_product_type = [
+            'name'              => _x( 'Type', 'taxonomy general name', 'textdomain' ),
+            'singular_name'     => _x( 'Type', 'taxonomy singular name', 'textdomain' ),
+            'search_items'      => __( 'Search Type', 'textdomain' ),
+            'all_items'         => __( 'All Type', 'textdomain' ),
+            'parent_item'       => __( 'Parent Type', 'textdomain' ),
+            'parent_item_colon' => __( 'Parent Type:', 'textdomain' ),
+            'edit_item'         => __( 'Edit Type', 'textdomain' ),
+            'update_item'       => __( 'Update Type', 'textdomain' ),
+            'add_new_item'      => __( 'Add New Type', 'textdomain' ),
+            'new_item_name'     => __( 'New Type Name', 'textdomain' ),
+            'menu_name'         => __( 'Type', 'textdomain' ),
+        ];
+
+        $args_product_type = [
+            'hierarchical'      => true,
+            'labels'            => $labels_product_type,
+            'show_ui'           => true,
+            'show_admin_column' => true,
+            'query_var'         => true,
+            'rewrite'           => ['slug' => 'type'],
+        ];
+
+        register_taxonomy( 'type', ['product'], $args_product_type );
     }
 
     private function trim_cred($s) { 
@@ -330,15 +414,24 @@ class HEO_WC_Importer {
         $minified_product['title'] =  $this->get_lan_data_from_array($p['name']);
         $minified_product['description'] =  $this->get_lan_data_from_array($p['description']);
         $minified_product['media'] = $p['media'];
-        $minified_product['isEndOfLife'] = $p['isEndOfLife'];
+        $minified_product['barcodes'] = $p['barcodes'];
+        $minified_product['dimensions'] = $p['dimensions']['validatedDimensions'] ?? $p['dimensions']['manufacturerDimensions'] ?? [];
 
         $categories = [];
         foreach($p['categories'] as $cat){ $categories[] = $this->get_lan_data_from_array($cat['translations']); }
         $minified_product['categories'] =  $categories;
 
+        $themes = [];
+        foreach($p['themes'] as $theme){ $themes[] = $this->get_lan_data_from_array($theme['translations']); }
+        $minified_product['themes'] =  $themes;
+
         $manufacturers = [];
         foreach($p['manufacturers'] as $manufac){ $manufacturers[] = $this->get_lan_data_from_array($manufac['translations']); }
         $minified_product['manufacturers'] =  $manufacturers;
+
+        $types = [];
+        foreach($p['types'] as $type){ $types[] = $this->get_lan_data_from_array($type['translations']); }
+        $minified_product['types'] =  $types;
 
         $minified_product['prices'] = $p['prices'];
         $minified_product['preorderDeadline'] = $p['preorderDeadline'];
@@ -378,6 +471,25 @@ class HEO_WC_Importer {
             as_schedule_single_action( time() + (self::AS_SPACING * self::BATCH), 'heo_wc_seed_page', [$next_page],  self::AS_GROUP);
             // $this->log('Next page event Add: '.$next_page);
         }
+    }
+
+    private function api_get_availabilities($sku){
+        list($user, $pass, $env) = $this->get_auth();
+        if ($user === '' || $pass === '') { $this->log('No credentials for API GET ('.$env.').'); return null; }
+        $auth = 'Basic '.base64_encode($user.':'.$pass);
+        $url = "https://integrate.heo.com/retailer-api/v1/catalog/availabilities?query=productNumber=={$sku}";
+        $method = 'GET';
+        $args = ['headers' => $this->headers() + ['Authorization' => $auth, 'Accept-Language'=>'en']];
+        $args = $args + ['timeout'=>60, 'redirection'=>0, 'sslverify'=>true, 'httpversion'=>'1.1', 'method'=>$method];
+
+        $res = wp_remote_request($url, $args);
+        if (is_wp_error($res)) {
+            $this->log('HTTP '.$method.' error: '.$res->get_error_message().' ['.$url.']');
+            return false;
+        } else {
+            $code = (int) wp_remote_retrieve_response_code($res);
+        }
+        return json_decode($res['body'], true)['content'];
     }
 
     private function insert_product_tax( array $term_names, string $taxonomy){
@@ -452,8 +564,18 @@ class HEO_WC_Importer {
             $this->log('The Product is already Updaloded SKU: '.$sku.', ID: '. $product_id);
             return false;
         }
+
+        $availability_info = $this->api_get_availabilities($sku);
+
+        if(!empty($availability_info)){
+            $availability_info = $availability_info[0];
+        }else{
+            $this->log('No availability info found for SKU '.$sku);
+            $availability_info = ['availableToOrder' => false, 'eta' => null];
+        }
         
-        ['title' => $title, 'description' => $description, 'prices' => ['basePricePerUnit' => ['amount'=> $price]], 'manufacturers' => $manufacturers, 'categories' => $categories, 'media' => $media, 'preorderDeadline' => $preorderDeadline] = $p;
+        ['title' => $title, 'description' => $description, 'prices' => ['basePricePerUnit' => ['amount'=> $price]], 'manufacturers' => $manufacturers, 'categories' => $categories, 'themes' => $themes, 'media' => $media, 'preorderDeadline' => $preorderDeadline, 'dimensions' => $dimensions, 'types' => $types, 'barcodes' => $barcodes] = $p;
+        ['availableToOrder' => $availableToOrder, 'eta' => $eta] = $availability_info;
 
         $categories = $this->insert_product_tax($categories, 'product_cat');
 
@@ -464,17 +586,43 @@ class HEO_WC_Importer {
         $product->set_status('publish');
         $product->set_regular_price($price);
         $product->set_category_ids( $categories );
+        
         if($preorderDeadline){
             $product->update_meta_data('_preorder_deadline', $preorderDeadline);
             $product->set_stock_status('preorder');
-        }else{
+        }elseif($availableToOrder){
             $product->set_stock_status('at_supplier');
+        }else{
+            $product->set_stock_status('outofstock');
         }
+
+        if($eta) $product->update_meta_data('_eta_deadline', $eta);
+
+        if($barcodes){
+            foreach($barcodes as $barcode){
+                if($barcode['type'] && $barcode['barcode']){
+                    $product->update_meta_data('_product_barcode_type', $barcode['type']);
+                    $product->update_meta_data('_product_barcode', $barcode['barcode']);
+                    break;
+                }
+            }
+        }
+
+        if($dimensions['width']) $product->set_width($dimensions['width']['value'] / 10);
+        if($dimensions['length']) $product->set_length($dimensions['length']['value'] / 10);
+        if($dimensions['height']) $product->set_height($dimensions['height']['value'] / 10);
+        if($dimensions['weight']) $product->set_weight($dimensions['weight']['value'] / 1000);
 
         $product_id = $product->save();
 
         $brands = $this->insert_product_tax($manufacturers, 'product_brand');
         wp_set_object_terms( $product_id, $brands, 'product_brand' );
+
+        $series = $this->insert_product_tax($themes, 'series');
+        wp_set_object_terms( $product_id, $series, 'series' );
+
+        $pr_types = $this->insert_product_tax($types, 'type');
+        wp_set_object_terms( $product_id, $pr_types, 'type' );
         
         $this->upload_image($product_id, $product, $media);
 
@@ -751,7 +899,7 @@ new HEO_WC_Importer();
 // Add custom stock statuses to WooCommerce
 add_filter('woocommerce_product_stock_status_options', function($status_options) {
     $status_options['at_supplier'] = __('At Supplier', 'woocommerce');
-    $status_options['preorder'] = __('Pre-Order', 'woocommerce');
+    $status_options['preorder'] = __('Pre Order', 'woocommerce');
     return $status_options;
 });
 
@@ -769,7 +917,7 @@ add_filter('woocommerce_get_availability_text', function($availability, $product
     if ($status === 'at_supplier') {
         $availability = __('Available at Supplier', 'woocommerce');
     } elseif ($status === 'preorder') {
-        $availability = __('Pre-Order Now', 'woocommerce');
+        $availability = __('Pre Order Now', 'woocommerce');
     }
     return $availability;
 }, 10, 2);
@@ -793,7 +941,7 @@ add_filter('woocommerce_admin_stock_html', function($stock_html, $product) {
     // Map your custom statuses to readable text
     $custom_labels = [
         'at_supplier' => __('At Supplier', 'woocommerce'),
-        'preorder'    => __('Pre-Order', 'woocommerce'),
+        'preorder'    => __('Pre Order', 'woocommerce'),
     ];
 
     if (isset($custom_labels[$status])) {
@@ -806,3 +954,25 @@ add_filter('woocommerce_admin_stock_html', function($stock_html, $product) {
 }, 10, 2);
 
 
+function keep_date_column_last( $columns ) {
+    if ( isset( $columns['date'] ) ) {
+        $date_column = $columns['date'];
+        unset( $columns['date'] ); 
+        $columns['date'] = $date_column;
+    }
+    return $columns;
+}
+add_filter( 'manage_edit-product_columns', 'keep_date_column_last', 20 );
+
+
+
+
+
+add_shortcode( 'at_supplyer_message', function(){
+    $stock_status = get_post_meta( get_the_ID(), '_stock_status', true );
+    if ( $stock_status === 'at_supplier' ){
+        return 'Maximum 30 days to arrive';
+    }else{
+        return '';
+    }
+} );
