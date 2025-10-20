@@ -295,7 +295,6 @@ class HEO_WC_Importer {
     }
 
     public function seed_each_stock_job($page = 1){
-        $this->log('Sock sync call: '. $page);
         $page_size = self::BATCH;
         list($user, $pass, $env) = $this->get_auth();
         if ($user === '' || $pass === '') { $this->log('No credentials for API GET ('.$env.').'); return null; }
@@ -321,16 +320,16 @@ class HEO_WC_Importer {
             if(!$product_id) continue;
 
             $product = wc_get_product( $product_id );
-            if(!$product) {
-                $this->log('Product object not found for stock update, SKU: '.$sku);
-                continue;
-            }
+            if(!$product) continue;
 
             ['availableToOrder' => $availableToOrder, 'eta' => $eta] = $each_product;
 
             $availableToOrder = $availableToOrder ? 'at_supplier' : 'outofstock';
             $current_stock_status = $product->get_stock_status();
-            $currnet_eta = $product->get_stock_status();
+            $currnet_eta = get_post_meta( $product_id, '_eta_deadline', true );
+
+            $currnet_eta = trim($currnet_eta);
+            $eta = trim($eta); 
 
             if($current_stock_status === $availableToOrder && $currnet_eta === $eta) {
                 continue;
@@ -340,6 +339,15 @@ class HEO_WC_Importer {
                 $this->log('Product in stock, skipping SKU: '.$sku);
                 continue;
             }
+
+            if( $current_stock_status === 'preorder' ){
+                $preorder_deadline = get_post_meta( $product_id, '_eta_deadline', true );
+                if($preorder_deadline && (strtotime($preorder_deadline) > time()) ) {
+                    $this->log('Product in preorder with valid deadline, skipping SKU: '.$sku);
+                    continue;
+                }
+            }
+            
 
             if($current_stock_status) $product->set_stock_status($current_stock_status);
             if($eta) $product->update_meta_data('_eta_deadline', $eta);
@@ -351,7 +359,6 @@ class HEO_WC_Importer {
         $next_page = $page + 1;
         if ( !as_next_scheduled_action(self::EACH_STOCK_PAGE, [$next_page]) && $response['pagination']['totalPages'] >= $next_page) {
             as_schedule_single_action( time() + self::AS_SPACING, self::EACH_STOCK_PAGE, [$next_page],  self::AS_GROUP);
-            $this->log('Next Stock check Page: '. $next_page);
         }
     }
 
