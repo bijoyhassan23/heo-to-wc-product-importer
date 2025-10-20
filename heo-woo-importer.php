@@ -21,6 +21,9 @@ class HEO_WC_Importer {
     const AS_SPACING = 40;
     const BATCH = 50;
 
+    const DAILY_STOCK_CHECK = 'heo_wc_stock_seed_page';
+    const EACH_STOCK_PAGE = 'heo_wc_stock_each_seed_page';
+
     public function __construct() {
         add_action('admin_menu', [$this, 'add_admin_page']);
         add_action('admin_init', [$this, 'register_settings']);
@@ -33,6 +36,10 @@ class HEO_WC_Importer {
         add_action('heo_wc_seed_page', [$this, 'seed_page_job']);
         add_action('heo_wc_import_single', [$this, 'process_single_job']);
         add_action('admin_post_heo_run_sync', [$this, 'handle_manual_sync']);
+        
+        add_action('admin_post_heo_run_stock_sync', [$this, 'handle_stock_sync']);
+        add_action(self::DAILY_STOCK_CHECK, [$this, 'seed_stock_job']);
+        add_action(self::EACH_STOCK_PAGE, [$this, 'seed_each_stock_job']);
 
         // Brand functionality
         add_action('product_brand_edit_form_fields', [$this, 'brand_fild_rendard'], 20, 1);
@@ -209,6 +216,12 @@ class HEO_WC_Importer {
                 <?php submit_button('Run Sync Now (Queue One-by-One)', 'primary', 'submit', false); ?>
             </form>
 
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline-block;margin-right:10px">
+                <?php wp_nonce_field('heo_run_stock_sync'); ?>
+                <input type="hidden" name="action" value="heo_run_stock_sync">
+                <?php submit_button('Sync Stock Now', 'primary', 'submit', false); ?>
+            </form>
+
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline-block">
                 <?php wp_nonce_field('heo_clear_log'); ?>
                 <input type="hidden" name="action" value="heo_clear_log">
@@ -257,6 +270,13 @@ class HEO_WC_Importer {
         wp_safe_redirect(add_query_arg(['page'=>self::PAGE_SLUG], admin_url('admin.php'))); exit;
     }
 
+    public function handle_stock_sync(){
+        if(as_next_scheduled_action( self::DAILY_STOCK_CHECK)) as_unschedule_action( self::DAILY_STOCK_CHECK );
+        if(as_next_scheduled_action( self::EACH_STOCK_PAGE )) as_unschedule_action( self::EACH_STOCK_PAGE ) ;
+        as_schedule_recurring_action( time(), DAY_IN_SECONDS, self::DAILY_STOCK_CHECK, [], self::AS_GROUP );
+        wp_safe_redirect(add_query_arg(['page'=>self::PAGE_SLUG], admin_url('admin.php'))); exit;
+    }
+
     public function seed_page_job($page = 1){
         // $this->log('Page call no: '.$page );
         $this->api_get($page);
@@ -264,6 +284,75 @@ class HEO_WC_Importer {
 
     public function process_single_job($p){
         $this->upsert_product($p);
+    }
+
+    public function seed_stock_job($page = 1){
+        if(as_next_scheduled_action( self::EACH_STOCK_PAGE )) {
+            $this->log('Stock sync already running, skipping new schedule.');
+            return;
+        }
+        as_schedule_single_action( time(), self::EACH_STOCK_PAGE, [1],  self::AS_GROUP);
+    }
+
+    public function seed_each_stock_job($page = 1){
+        $this->log('Sock sync call: '. $page);
+        $page_size = self::BATCH;
+        list($user, $pass, $env) = $this->get_auth();
+        if ($user === '' || $pass === '') { $this->log('No credentials for API GET ('.$env.').'); return null; }
+        $auth = 'Basic '.base64_encode($user.':'.$pass);
+        $url = "https://integrate.heo.com/retailer-api/v1/catalog/availabilities?pageSize={$page_size}&page={$page}";
+        $method = 'GET';
+        $args = ['headers' => $this->headers() + ['Authorization' => $auth, 'Accept-Language'=>'en']];
+        $args = $args + ['timeout'=>60, 'redirection'=>0, 'sslverify'=>true, 'httpversion'=>'1.1', 'method'=>$method];
+
+        $res = wp_remote_request($url, $args);
+        if (is_wp_error($res)) {
+            $this->log('HTTP '.$method.' error: '.$res->get_error_message().' ['.$url.']');
+        } else {
+            $code = (int) wp_remote_retrieve_response_code($res);
+        }
+        $response = json_decode($res['body'], true);
+
+        foreach($response['content'] as $each_product){
+            $sku = $each_product['productNumber'] ?? ''; 
+            if ($sku === '') continue;
+
+            $product_id = wc_get_product_id_by_sku($sku);
+            if(!$product_id) continue;
+
+            $product = wc_get_product( $product_id );
+            if(!$product) {
+                $this->log('Product object not found for stock update, SKU: '.$sku);
+                continue;
+            }
+
+            ['availableToOrder' => $availableToOrder, 'eta' => $eta] = $each_product;
+
+            $availableToOrder = $availableToOrder ? 'at_supplier' : 'outofstock';
+            $current_stock_status = $product->get_stock_status();
+            $currnet_eta = $product->get_stock_status();
+
+            if($current_stock_status === $availableToOrder && $currnet_eta === $eta) {
+                continue;
+            }
+
+            if ( $current_stock_status === 'instock' ){
+                $this->log('Product in stock, skipping SKU: '.$sku);
+                continue;
+            }
+
+            if($current_stock_status) $product->set_stock_status($current_stock_status);
+            if($eta) $product->update_meta_data('_eta_deadline', $eta);
+
+            $product_id = $product->save();
+            $this->log('Stock updated for SKU: '.$sku.', ID: '. $product_id);
+        } 
+
+        $next_page = $page + 1;
+        if ( !as_next_scheduled_action(self::EACH_STOCK_PAGE, [$next_page]) && $response['pagination']['totalPages'] >= $next_page) {
+            as_schedule_single_action( time() + self::AS_SPACING, self::EACH_STOCK_PAGE, [$next_page],  self::AS_GROUP);
+            $this->log('Next Stock check Page: '. $next_page);
+        }
     }
 
     public function heo_add_custom_product_field_for_general() {
@@ -384,9 +473,9 @@ class HEO_WC_Importer {
         $o = get_option(self::OPT, []); 
         $env = $o['environment'] ?? 'sandbox';
         if ($env === 'production') {
-            return "https://integrate.heo.com/retailer-api/v1/catalog/products?pageSize={$page_size}&page=${page}";
+            return "https://integrate.heo.com/retailer-api/v1/catalog/products?pageSize={$page_size}&page={$page}";
         }
-        return "https://integrate.heo.com/retailer-api-test/v1/catalog/products?pageSize={$page_size}&page=${page}";
+        return "https://integrate.heo.com/retailer-api-test/v1/catalog/products?pageSize={$page_size}&page={$page}";
     }
     
     private function headers() {
@@ -466,7 +555,7 @@ class HEO_WC_Importer {
         }        
 
         $next_page = $page + 1;
-        if ( !as_next_scheduled_action('heo_wc_seed_page', [$next_page]) && $response['pagination']['totalPages'] > $next_page) {
+        if ( !as_next_scheduled_action('heo_wc_seed_page', [$next_page]) && $response['pagination']['totalPages'] >= $next_page) {
             as_schedule_single_action( time() + (self::AS_SPACING * self::BATCH), 'heo_wc_seed_page', [$next_page],  self::AS_GROUP);
             // $this->log('Next page event Add: '.$next_page);
         }
