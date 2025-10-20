@@ -21,7 +21,6 @@ class HEO_WC_Importer {
     const AS_SPACING = 40;
     const BATCH = 50;
 
-
     public function __construct() {
         add_action('admin_menu', [$this, 'add_admin_page']);
         add_action('admin_init', [$this, 'register_settings']);
@@ -33,7 +32,7 @@ class HEO_WC_Importer {
         // Action Scheduler (positional single arg)
         add_action('heo_wc_seed_page', [$this, 'seed_page_job']);
         add_action('heo_wc_import_single', [$this, 'process_single_job']);
-        add_action('admin_post_heo_run_sync',       [$this, 'handle_manual_sync']);
+        add_action('admin_post_heo_run_sync', [$this, 'handle_manual_sync']);
 
         // Brand functionality
         add_action('product_brand_edit_form_fields', [$this, 'brand_fild_rendard'], 20, 1);
@@ -963,16 +962,3 @@ function keep_date_column_last( $columns ) {
     return $columns;
 }
 add_filter( 'manage_edit-product_columns', 'keep_date_column_last', 20 );
-
-
-
-
-
-add_shortcode( 'at_supplyer_message', function(){
-    $stock_status = get_post_meta( get_the_ID(), '_stock_status', true );
-    if ( $stock_status === 'at_supplier' ){
-        return 'Maximum 30 days to arrive';
-    }else{
-        return '';
-    }
-} );
