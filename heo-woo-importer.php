@@ -2,7 +2,7 @@
 /**
  * Plugin Name: heo → WooCommerce Importer
  * Description: Imports & syncs products.
- * Version: 3.0.2
+ * Version: 4.0.0
  * Author: Bijoy
  * Author URI: https://bijoy.dev
  */
