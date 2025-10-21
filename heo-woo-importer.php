@@ -2,7 +2,7 @@
 /**
  * Plugin Name: heo → WooCommerce Importer
  * Description: Imports & syncs products.
- * Version: 4.0.0
+ * Version: 4.0.2
  * Author: Bijoy
  * Author URI: https://bijoy.dev
  */
@@ -322,34 +322,30 @@ class HEO_WC_Importer {
             $product = wc_get_product( $product_id );
             if(!$product) continue;
 
-            ['availableToOrder' => $availableToOrder, 'eta' => $eta] = $each_product;
+            ['availabilityState' => $availabilityState, 'availableToOrder' => $availableToOrder, 'eta' => $eta] = $each_product;
+            $eta = trim($eta);
 
-            $availableToOrder = $availableToOrder ? 'at_supplier' : 'outofstock';
             $current_stock_status = $product->get_stock_status();
-            $currnet_eta = get_post_meta( $product_id, '_eta_deadline', true );
-
-            $currnet_eta = trim($currnet_eta);
-            $eta = trim($eta); 
-
-            if($current_stock_status === $availableToOrder && $currnet_eta === $eta) {
-                continue;
-            }
-
             if ( $current_stock_status === 'instock' ){
                 $this->log('Product in stock, skipping SKU: '.$sku);
                 continue;
             }
 
-            if( $current_stock_status === 'preorder' ){
-                $preorder_deadline = get_post_meta( $product_id, '_eta_deadline', true );
-                if($preorder_deadline && (strtotime($preorder_deadline) > time()) ) {
-                    $this->log('Product in preorder with valid deadline, skipping SKU: '.$sku);
-                    continue;
-                }
-            }
-            
+            $currnet_eta = get_post_meta( $product_id, '_eta_deadline', true );
+            $currnet_eta = trim($currnet_eta);
+            $preorderDeadline = get_post_meta( $product_id, '_preorder_deadline', true );
 
-            if($current_stock_status) $product->set_stock_status($current_stock_status);
+            if(($preorderDeadline && (strtotime($preorderDeadline) > time())) || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
+                $query_stock_status = 'preorder';
+            }elseif($availabilityState === 'AVAILABLE' && $availableToOrder){
+                $query_stock_status = 'at_supplier';
+            }else{
+                $query_stock_status = 'outofstock';
+            }
+
+            if($current_stock_status === $query_stock_status && $currnet_eta === $eta) continue;
+
+            if($query_stock_status) $product->set_stock_status($query_stock_status);
             if($eta) $product->update_meta_data('_eta_deadline', $eta);
 
             $product_id = $product->save();
@@ -615,9 +611,6 @@ class HEO_WC_Importer {
                 $this->log('Image Upload fail, product ID'.$product_id.' url : '.$url);
                 continue;
             }
-            // else{
-            //     $this->log('Image Upload Successfull, product ID'.$product_id.' url : '.$url);
-            // }
             $image_ids[] = $attachment_id;
         }
         return $image_ids;
@@ -666,11 +659,11 @@ class HEO_WC_Importer {
             $availability_info = $availability_info[0];
         }else{
             $this->log('No availability info found for SKU '.$sku);
-            $availability_info = ['availableToOrder' => false, 'eta' => null];
+            $availability_info = ['availabilityState' => '', 'availableToOrder' => false, 'eta' => null];
         }
         
         ['title' => $title, 'description' => $description, 'prices' => ['basePricePerUnit' => ['amount'=> $price]], 'manufacturers' => $manufacturers, 'categories' => $categories, 'themes' => $themes, 'media' => $media, 'preorderDeadline' => $preorderDeadline, 'dimensions' => $dimensions, 'types' => $types, 'barcodes' => $barcodes] = $p;
-        ['availableToOrder' => $availableToOrder, 'eta' => $eta] = $availability_info;
+        ['availableToOrder' => $availableToOrder, 'eta' => $eta, 'availabilityState' => $availabilityState] = $availability_info;
 
         $categories = $this->insert_product_tax($categories, 'product_cat');
 
@@ -682,15 +675,15 @@ class HEO_WC_Importer {
         $product->set_regular_price($price);
         $product->set_category_ids( $categories );
         
-        if($preorderDeadline){
-            $product->update_meta_data('_preorder_deadline', $preorderDeadline);
+        if($preorderDeadline || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
             $product->set_stock_status('preorder');
-        }elseif($availableToOrder){
+        }elseif($availabilityState === 'AVAILABLE' && $availableToOrder){
             $product->set_stock_status('at_supplier');
         }else{
             $product->set_stock_status('outofstock');
         }
 
+        if($preorderDeadline) $product->update_meta_data('_preorder_deadline', $preorderDeadline);
         if($eta) $product->update_meta_data('_eta_deadline', $eta);
 
         if($barcodes){
@@ -1028,7 +1021,6 @@ add_filter('woocommerce_get_availability_class', function($class, $product) {
     return $class;
 }, 10, 2);
 
-
 // Ensure custom stock statuses show in admin product list (Stock column)
 add_filter('woocommerce_admin_stock_html', function($stock_html, $product) {
     $status = $product->get_stock_status();
@@ -1047,7 +1039,6 @@ add_filter('woocommerce_admin_stock_html', function($stock_html, $product) {
 
     return $stock_html;
 }, 10, 2);
-
 
 function keep_date_column_last( $columns ) {
     if ( isset( $columns['date'] ) ) {
