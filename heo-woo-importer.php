@@ -75,9 +75,6 @@ class HEO_WC_Importer {
         $defult_price_multiplier = $o['defult_price_multiplier'] ?? '';
 
         $log = get_transient(self::LOG_TRANSIENT);
-        // echo '<pre>';
-        //     var_export($o);
-        // echo '</pre>';
         ?>
         <div class="wrap">
             <h1>heo → Woo Importer</h1>
@@ -564,11 +561,11 @@ class HEO_WC_Importer {
         }
     }
 
-    private function api_get_availabilities($sku){
+    private function api_get_single_info($sku, $api_type = 'products'){
         list($user, $pass, $env) = $this->get_auth();
         if ($user === '' || $pass === '') { $this->log('No credentials for API GET ('.$env.').'); return null; }
         $auth = 'Basic '.base64_encode($user.':'.$pass);
-        $url = "https://integrate.heo.com/retailer-api/v1/catalog/availabilities?query=productNumber=={$sku}";
+        $url = "https://integrate.heo.com/retailer-api/v1/catalog/" . $api_type . "?query=productNumber=={$sku}";
         $method = 'GET';
         $args = ['headers' => $this->headers() + ['Authorization' => $auth, 'Accept-Language'=>'en']];
         $args = $args + ['timeout'=>60, 'redirection'=>0, 'sslverify'=>true, 'httpversion'=>'1.1', 'method'=>$method];
@@ -653,13 +650,20 @@ class HEO_WC_Importer {
             return false;
         }
 
-        $availability_info = $this->api_get_availabilities($sku);
-
+        $availability_info = $this->api_get_single_info($sku, 'availabilities');
         if(!empty($availability_info)){
             $availability_info = $availability_info[0];
         }else{
             $this->log('No availability info found for SKU '.$sku);
             $availability_info = ['availabilityState' => '', 'availableToOrder' => false, 'eta' => null];
+        }
+
+        $price_info = $this->api_get_single_info($sku, 'prices');
+        if(!empty($price_info)){
+            $price_info = $price_info[0];
+        }else{
+            $this->log('No Price info found for SKU '.$sku);
+            $price_info = [ 'basePricePerUnit' => ['amount'=> null], 'strikePricePerUnit' => null, 'discountedPricePerUnit' => ['amount'=> null] ];
         }
         
         ['title' => $title, 'description' => $description, 'prices' => ['basePricePerUnit' => ['amount'=> $price]], 'manufacturers' => $manufacturers, 'categories' => $categories, 'themes' => $themes, 'media' => $media, 'preorderDeadline' => $preorderDeadline, 'dimensions' => $dimensions, 'types' => $types, 'barcodes' => $barcodes] = $p;
@@ -672,9 +676,19 @@ class HEO_WC_Importer {
         $product->set_name($title);
         $product->set_description($description);
         $product->set_status('publish');
-        $product->set_regular_price($price);
         $product->set_category_ids( $categories );
+
+        // Setup the price
+        if($price_info['strikePricePerUnit']['amount'] && $price_info['basePricePerUnit']['amount']){
+            $product->set_regular_price($price_info['strikePricePerUnit']['amount']);
+            $product->set_sale_price($price_info['basePricePerUnit']['amount']);
+        }elseif(!$price_info['strikePricePerUnit'] && $price_info['basePricePerUnit']['amount']){
+            $product->set_regular_price($price_info['basePricePerUnit']['amount']);
+        }else{
+            $product->set_regular_price($price);
+        }
         
+
         if($preorderDeadline || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
             $product->set_stock_status('preorder');
         }elseif($availabilityState === 'AVAILABLE' && $availableToOrder){
