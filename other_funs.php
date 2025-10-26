@@ -111,6 +111,23 @@ add_action('elementor/query/hotedeals_product', function($query) {
         // No discounted products found — return nothing
         $query->set('post__in', [0]);
     }
+
+    $stock_status = isset($_GET['stock_status']) ? sanitize_text_field($_GET['stock_status']) : '';
+    // Base meta query array
+    $meta_query = [];
+
+    // Add stock status filter if provided
+    if (!empty($stock_status)) {
+        $meta_query[] = [
+            'key'     => '_stock_status',
+            'value'   => $stock_status, // e.g. 'instock' or 'outofstock'
+            'compare' => '='
+        ];
+    }
+    // Apply meta query if not empty
+    if (!empty($meta_query)) {
+        $query->set('meta_query', $meta_query);
+    }
 });
 // hot deals count
 add_shortcode('hot_deals_count', function() {
