@@ -96,7 +96,7 @@ add_action('elementor/query/anisale_product', function($query) {
 });
 
 // anisale count
-add_shortcode('anisale_count', function() {
+add_shortcode('anisale_count', function() { 
     global $discounted_products_ids;
     $total = is_array($discounted_products_ids) ? count($discounted_products_ids) : 0;
     return 'Total Products ' . $total;

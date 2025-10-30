@@ -1,0 +1,16 @@
+<script>
+    let getPriceFilterDiv = document.querySelector('.wpf-slider-label')
+    const observer = new MutationObserver(function(mutations) {
+        console.log('Mutation observed:', mutations);
+    });
+    observer.observe(getPriceFilterDiv, { childList: true, attributes: true, characterData: true, subtree: true });
+</script>
+
+<script>
+    let x = window.fetch;
+    window.fetch = function(url, ...args) {
+        console.log('Fetch called with arguments:', url, args);
+        url = url.split('?')[0] + location.search;
+        return x.apply(this, [url, ...args]);
+    };
+</script>
