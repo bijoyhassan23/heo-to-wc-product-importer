@@ -7,7 +7,7 @@ add_shortcode('product_filters', function() {
     $stock_statuses = $wpdb->get_col("
         SELECT DISTINCT meta_value 
         FROM {$wpdb->postmeta} 
-        WHERE meta_key = '_stock_status' 
+        WHERE meta_key = '_stock_status' /
         AND meta_value != ''
     ");
     ?>
