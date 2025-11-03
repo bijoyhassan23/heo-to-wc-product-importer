@@ -110,7 +110,7 @@ function loop_filters(&$query) {
 
         case 'hightolow':
             $query->set('meta_key', '_price');
-            $query->set('orderby', 'meta_value_num');
+            $query->set('orderby', 'meta_value_num');   
             $query->set('order', 'DESC');
             break;
 
@@ -123,5 +123,10 @@ function loop_filters(&$query) {
     $per_page = isset($_GET['per_page']) ? intval($_GET['per_page']) : 0;
     if ($per_page > 0) {
         $query->set('posts_per_page', $per_page);
+    }
+
+    $search_keyuword = isset($_GET['s']) ? $_GET['s'] : '';
+    if (!empty($search_keyuword)) {
+        $query->set('s', $search_keyuword);
     }
 }

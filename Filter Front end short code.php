@@ -11,63 +11,6 @@ add_shortcode('product_filters', function() {
         AND meta_value != ''
     ");
     ?>
-    <style>
-        .filter_con {
-            width: 280px;
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 8px;
-            background: #fff;
-            font-family: sans-serif;
-        }
-        .each_filter {
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-        }
-        .filter_header {
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none;
-            padding: 4px 0;
-        }
-        .toggle-icon {
-            font-size: 20px;
-            transition: transform 0.2s ease;
-        }
-        .clapse_able_part {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.35s ease, padding 0.2s ease;
-            padding-left: 10px;
-            padding-top: 0;
-        }
-        .clapse_able_part.open {
-            max-height: 400px;
-            padding-top: 5px;
-        }
-        label {
-            font-size: 14px;
-            display: block;
-            margin: 3px 0;
-        }
-        .reset-filters {
-            background: #ff4d4d;
-            color: #fff;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-        }
-        .reset-filters:hover {
-            background: #e63c3c;
-        }
-    </style>
 
     <div class="filter_con">
 
@@ -111,10 +54,10 @@ add_shortcode('product_filters', function() {
         <!-- STOCK STATUS -->
         <div class="each_filter">
             <div class="filter_header">
-                <label>Stock Status</label>
+                <label>Stock</label>
                 <span class="toggle-icon">+</span>
             </div>
-            <div class="clapse_able_part">
+            <div class="clapse_able_part" translate="no">
                 <?php
                 if ($stock_statuses) {
                     foreach ($stock_statuses as $status) {
@@ -130,10 +73,10 @@ add_shortcode('product_filters', function() {
         <!-- PRICE RANGE -->
         <div class="each_filter">
             <div class="filter_header">
-                <label>Price Range</label>
+                <label>Price</label>
                 <span class="toggle-icon">+</span>
             </div>
-            <div class="clapse_able_part">
+            <div class="clapse_able_part" translate="no">
                 <input type="number" id="min_price" placeholder="Min"> -
                 <input type="number" id="max_price" placeholder="Max">
                 <button class="apply-price">Apply</button>
@@ -143,10 +86,10 @@ add_shortcode('product_filters', function() {
         <!-- CATEGORY -->
         <div class="each_filter">
             <div class="filter_header">
-                <label>Product Category</label>
+                <label>Category</label>
                 <span class="toggle-icon">+</span>
             </div>
-            <div class="clapse_able_part">
+            <div class="clapse_able_part" translate="no">
                 <?php
                 $categories = get_terms(['taxonomy' => 'product_cat', 'hide_empty' => false]);
                 foreach ($categories as $cat) {
@@ -159,10 +102,10 @@ add_shortcode('product_filters', function() {
         <!-- BRAND -->
         <div class="each_filter">
             <div class="filter_header">
-                <label>Brand</label>
+                <label>Manufacturers</label>
                 <span class="toggle-icon">+</span>
             </div>
-            <div class="clapse_able_part">
+            <div class="clapse_able_part" translate="no">
                 <?php
                 $brands = get_terms(['taxonomy' => 'product_brand', 'hide_empty' => false]);
                 foreach ($brands as $brand) {
@@ -178,7 +121,7 @@ add_shortcode('product_filters', function() {
                 <label>Series</label>
                 <span class="toggle-icon">+</span>
             </div>
-            <div class="clapse_able_part">
+            <div class="clapse_able_part" translate="no">
                 <?php
                 $series = get_terms(['taxonomy' => 'series', 'hide_empty' => false]);
                 foreach ($series as $s) {
@@ -194,7 +137,7 @@ add_shortcode('product_filters', function() {
                 <label>Type</label>
                 <span class="toggle-icon">+</span>
             </div>
-            <div class="clapse_able_part">
+            <div class="clapse_able_part" translate="no">
                 <?php
                 $types = get_terms(['taxonomy' => 'type', 'hide_empty' => false]);
                 foreach ($types as $t) {
@@ -228,7 +171,7 @@ add_shortcode('product_filters', function() {
         });
 
         function updateURL() {
-            const newParams = new URLSearchParams();
+            const newParams = new URLSearchParams(location.search);
 
             document.querySelectorAll('.filter-input').forEach(input => {
                 const name = input.name;
