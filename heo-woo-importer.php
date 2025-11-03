@@ -948,7 +948,6 @@ class HEO_WC_Importer {
         // if (is_admin()) return $price; // keep backend unchanged
         $is_price_update = false;
 
-
         $product_id = $product_obj->get_id();
         $product = wc_get_product( $product_id );
         $brands = wp_get_post_terms($product_id, 'product_brand');
@@ -1031,7 +1030,7 @@ class HEO_WC_Importer {
                 }
             }
         }
-        return $price;
+        return 1;
     }
 
 }

@@ -15,7 +15,7 @@ add_shortcode('product_filters', function() {
     <div class="filter_con">
 
         <!-- ORDERBY -->
-        <div class="each_filter">
+        <div class="each_filter orderby_filter">
             <div class="filter_header">
                 <label>Order By</label>
                 <span class="toggle-icon">+</span>
@@ -36,7 +36,7 @@ add_shortcode('product_filters', function() {
         </div>
 
         <!-- PER PAGE -->
-        <div class="each_filter">
+        <div class="each_filter per_page_filter">
             <div class="filter_header">
                 <label>Products Per Page</label>
                 <span class="toggle-icon">+</span>
@@ -52,7 +52,7 @@ add_shortcode('product_filters', function() {
         </div>
 
         <!-- STOCK STATUS -->
-        <div class="each_filter">
+        <div class="each_filter stock_status_filter">
             <div class="filter_header">
                 <label>Stock</label>
                 <span class="toggle-icon">+</span>
@@ -71,20 +71,22 @@ add_shortcode('product_filters', function() {
         </div>
 
         <!-- PRICE RANGE -->
-        <div class="each_filter">
+        <div class="each_filter price_range_filter">
             <div class="filter_header">
                 <label>Price</label>
                 <span class="toggle-icon">+</span>
             </div>
             <div class="clapse_able_part" translate="no">
-                <input type="number" id="min_price" placeholder="Min"> -
-                <input type="number" id="max_price" placeholder="Max">
+				<div class="price_inputs">
+					<input type="number" id="min_price" placeholder="Min"> -
+					<input type="number" id="max_price" placeholder="Max">
+				</div>
                 <button class="apply-price">Apply</button>
             </div>
         </div>
 
         <!-- CATEGORY -->
-        <div class="each_filter">
+        <div class="each_filter category_filter">
             <div class="filter_header">
                 <label>Category</label>
                 <span class="toggle-icon">+</span>
@@ -100,7 +102,7 @@ add_shortcode('product_filters', function() {
         </div>
 
         <!-- BRAND -->
-        <div class="each_filter">
+        <div class="each_filter brand_filter">
             <div class="filter_header">
                 <label>Manufacturers</label>
                 <span class="toggle-icon">+</span>
@@ -116,7 +118,7 @@ add_shortcode('product_filters', function() {
         </div>
 
         <!-- SERIES -->
-        <div class="each_filter">
+        <div class="each_filter series_filter">
             <div class="filter_header">
                 <label>Series</label>
                 <span class="toggle-icon">+</span>
@@ -132,7 +134,7 @@ add_shortcode('product_filters', function() {
         </div>
 
         <!-- TYPE -->
-        <div class="each_filter">
+        <div class="each_filter type_filter">
             <div class="filter_header">
                 <label>Type</label>
                 <span class="toggle-icon">+</span>

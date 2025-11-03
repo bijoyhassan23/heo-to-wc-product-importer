@@ -48,3 +48,28 @@ add_action( 'elementor/query/archive_products', function( $query ) {
         }
     }
 });
+
+add_action( 'elementor/query/related_series_products', function( $query ) {
+    if ( ! is_product() ) {
+        return;
+    }
+
+    global $wp_query;
+    $product_id = $wp_query->post->ID;
+
+    $terms = wp_get_post_terms( $product_id, 'series', [ 'fields' => 'ids' ] );
+
+    if ( empty( $terms ) || is_wp_error( $terms ) ) {
+        return;
+    }
+	
+	$meta_query = $query->get( 'meta_query' );
+    if (!$meta_query) $meta_query = [];
+	$meta_query[] =  [
+		'taxonomy' => 'series',
+		'field'    => 'term_id',
+		'terms'    => $terms,
+	];
+    $query->set( 'meta_query', $meta_query );
+    $query->set( 'post__not_in', [ $product_id ] );
+});

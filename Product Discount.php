@@ -86,6 +86,8 @@ add_action( 'wp_head', 'set_global_discounted_products' );
 
 // Ani sale products
 add_action('elementor/query/anisale_product', function($query) {
+    if(function_exists('loop_filters')) loop_filters($query);
+
     global $discounted_products_ids;
     if (!empty($discounted_products_ids)) {
         $query->set('post__in', $discounted_products_ids);
@@ -104,6 +106,8 @@ add_shortcode('anisale_count', function() {
 
 // Hot deals products
 add_action('elementor/query/hotedeals_product', function($query) {
+    if(function_exists('loop_filters')) loop_filters($query);
+
     global $hot_deals_ids;
     if (!empty($hot_deals_ids)) {
         $query->set('post__in', $hot_deals_ids);
