@@ -1,6 +1,4 @@
 <?php
-
-
 // 1. Register a new endpoint for "My Projects"
 function custom_add_my_account_endpoint() {
     add_rewrite_endpoint( 'wishlist', EP_PAGES );

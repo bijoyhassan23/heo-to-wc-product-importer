@@ -421,6 +421,12 @@ class HEO_WC_Importer {
                 $product = wc_get_product( $product_id );
                 if(!$product) continue;
                 
+                $current_stock_status = $product->get_stock_status();
+                if ( $current_stock_status === 'instock' ){
+                    $this->log('Product in stock, skipping price Update for SKU: '.$sku);
+                    continue;
+                }
+
                 $regular_price = false;
                 $sale_price = false;
                 // Setup the price

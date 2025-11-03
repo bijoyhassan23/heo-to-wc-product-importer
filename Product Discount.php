@@ -96,10 +96,10 @@ add_action('elementor/query/anisale_product', function($query) {
 });
 
 // anisale count
-add_shortcode('anisale_count', function() { 
+add_shortcode('anisale_count', function() {
     global $discounted_products_ids;
     $total = is_array($discounted_products_ids) ? count($discounted_products_ids) : 0;
-    return 'Total Products ' . $total;
+    return 'Total Products <span class="total_product">' . $total . '</span>';
 });
 
 // Hot deals products
@@ -112,26 +112,10 @@ add_action('elementor/query/hotedeals_product', function($query) {
         $query->set('post__in', [0]);
     }
 
-    $stock_status = isset($_GET['stock_status']) ? sanitize_text_field($_GET['stock_status']) : '';
-    // Base meta query array
-    $meta_query = [];
-
-    // Add stock status filter if provided
-    if (!empty($stock_status)) {
-        $meta_query[] = [
-            'key'     => '_stock_status',
-            'value'   => $stock_status, // e.g. 'instock' or 'outofstock'
-            'compare' => '='
-        ];
-    }
-    // Apply meta query if not empty
-    if (!empty($meta_query)) {
-        $query->set('meta_query', $meta_query);
-    }
 });
 // hot deals count
 add_shortcode('hot_deals_count', function() {
     global $hot_deals_ids;
     $total = is_array($hot_deals_ids) ? count($hot_deals_ids) : 0;
-    return 'Total Products ' . $total;
+    return 'Total Products <span class="total_product">' . $total . '</span>';
 });
