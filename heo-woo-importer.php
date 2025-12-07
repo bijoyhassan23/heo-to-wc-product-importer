@@ -2,12 +2,19 @@
 /**
  * Plugin Name: heo → WooCommerce Importer
  * Description: Imports & syncs products.
- * Version: 5.0.0
+ * Version: 6.0.0
  * Author: Bijoy
  * Author URI: https://bijoy.dev
  */
 
 if ( ! defined('ABSPATH') ) exit;
+
+define('HEO_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('HEO_PLUGIN_URL', plugin_dir_url( __FILE__ ));
+define('HEO_PLUGIN_VERSION', '6.0.0');
+
+// Include necessary files
+include_once HEO_PLUGIN_DIR . 'includes/stock-status.php';
 
 class HEO_WC_Importer {
     const OPT = 'heo_wc_importer_settings'; // Option name 
@@ -24,6 +31,7 @@ class HEO_WC_Importer {
     const DAILY_CHECK_SCHEDULAR = 'heo_wc_regular_seed_page';
     const EACH_REGULAR_SYNC = 'heo_wc_regular_each_seed_page';
 
+    use Stock_status;
     public function __construct() {
         add_action('admin_menu', [$this, 'add_admin_page']);
         add_action('admin_init', [$this, 'register_settings']);
@@ -51,6 +59,9 @@ class HEO_WC_Importer {
         add_action('woocommerce_product_options_general_product_data', [$this, 'heo_add_custom_product_field_for_general']);
         add_action('woocommerce_product_options_inventory_product_data', [$this, 'heo_add_custom_product_field_for_inventory']);
         add_action('woocommerce_admin_process_product_object', [$this, 'heo_save_custom_field_data']);
+
+        // Stock status added
+        $this->stock_status_init();
     }
 
     private function get_auth() {
@@ -1037,61 +1048,7 @@ class HEO_WC_Importer {
 new HEO_WC_Importer();
 
 
-// Add custom stock statuses to WooCommerce
-add_filter('woocommerce_product_stock_status_options', function($status_options) {
-    $status_options['at_supplier'] = __('At Supplier', 'woocommerce');
-    $status_options['preorder'] = __('Pre Order', 'woocommerce');
-    return $status_options;
-});
 
-// Make WooCommerce recognize custom statuses
-add_filter('woocommerce_product_stock_status', function($status, $product) {
-    if (in_array($status, ['at_supplier', 'preorder'])) {
-        return $status;
-    }
-    return $status;
-}, 10, 2);
-
-// Display correct label on the front end (product page)
-add_filter('woocommerce_get_availability_text', function($availability, $product) {
-    $status = $product->get_stock_status();
-    if ($status === 'at_supplier') {
-        $availability = __('Available at Supplier', 'woocommerce');
-    } elseif ($status === 'preorder') {
-        $availability = __('Pre Order Now', 'woocommerce');
-    }
-    return $availability;
-}, 10, 2);
-
-// Optional: change color or style
-add_filter('woocommerce_get_availability_class', function($class, $product) {
-    $status = $product->get_stock_status();
-    if ($status === 'at_supplier') {
-        $class = 'stock at-supplier';
-    } elseif ($status === 'preorder') {
-        $class = 'stock preorder';
-    }
-    return $class;
-}, 10, 2);
-
-// Ensure custom stock statuses show in admin product list (Stock column)
-add_filter('woocommerce_admin_stock_html', function($stock_html, $product) {
-    $status = $product->get_stock_status();
-
-    // Map your custom statuses to readable text
-    $custom_labels = [
-        'at_supplier' => __('At Supplier', 'woocommerce'),
-        'preorder'    => __('Pre Order', 'woocommerce'),
-    ];
-
-    if (isset($custom_labels[$status])) {
-        // Optional: add color/style
-        $color = $status === 'at_supplier' ? '#e6b800' : '#0073aa'; // yellow / blue
-        $stock_html = '<mark class="stock" style="background: transparent none;color:' . esc_attr($color) . ';">' . esc_html($custom_labels[$status]) . '</mark>';
-    }
-
-    return $stock_html;
-}, 10, 2);
 
 function keep_date_column_last( $columns ) {
     if ( isset( $columns['date'] ) ) {
