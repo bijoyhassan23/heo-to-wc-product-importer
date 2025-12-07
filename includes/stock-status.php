@@ -3,10 +3,10 @@
 trait Stock_status{
     private function stock_status_init(){
         add_filter('woocommerce_product_stock_status_options', [$this, 'add_custom_stock_status']);
-        add_filter('woocommerce_product_stock_status', [$this, 'woocomerce_recognize'], 10, 2);
-        add_filter('woocommerce_get_availability_text', [$this, 'display_correct_label'], 10, 2);
-        add_filter('woocommerce_get_availability_class', [$this, 'change_color'], 10, 2);
-        add_filter('woocommerce_admin_stock_html', [$this, 'show_admin_list'], 10, 2);
+        add_filter('woocommerce_product_stock_status',         [$this, 'woocomerce_recognize'], 10, 2);
+        add_filter('woocommerce_get_availability_text',        [$this, 'display_correct_label'], 10, 2);
+        add_filter('woocommerce_get_availability_class',       [$this, 'change_color'], 10, 2);
+        add_filter('woocommerce_admin_stock_html',             [$this, 'show_admin_list'], 10, 2);
     }
 
     // Add custom stock statuses to WooCommerce
