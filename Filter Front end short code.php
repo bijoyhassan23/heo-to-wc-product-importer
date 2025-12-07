@@ -211,6 +211,13 @@ add_shortcode('product_filters', function() {
                 icon.textContent = part.classList.contains('open') ? '−' : '+';
             });
         });
+
+        document.querySelectorAll('.elementor-widget-loop-grid .elementor-pagination a').forEach((item) => {
+            let url = item.href;
+            if(!url.includes(location.search)){
+                item.href = url + location.search;
+            }
+        })
     });
     </script>
     <?php
