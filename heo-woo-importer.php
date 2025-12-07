@@ -18,7 +18,7 @@ class HEO_WC_Importer {
     const LANG_CODE = 'EN';
 
     const AS_GROUP   = 'heo_wc_importer_queue';
-    const AS_SPACING = 40;
+    const AS_SPACING = 20;
     const BATCH = 50;
 
     const DAILY_CHECK_SCHEDULAR = 'heo_wc_regular_seed_page';
@@ -421,12 +421,12 @@ class HEO_WC_Importer {
                 $product = wc_get_product( $product_id );
                 if(!$product) continue;
                 
-                $current_stock_status = $product->get_stock_status();
+				$current_stock_status = $product->get_stock_status();
                 if ( $current_stock_status === 'instock' ){
                     $this->log('Product in stock, skipping price Update for SKU: '.$sku);
                     continue;
                 }
-
+				
                 $regular_price = false;
                 $sale_price = false;
                 // Setup the price
@@ -999,7 +999,7 @@ class HEO_WC_Importer {
             }
         }
 
-        return $price ;
+		return $price ;
     }
 
     private function ft_get_brand_price_ranges( $brand ) {
