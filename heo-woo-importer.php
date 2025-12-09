@@ -5,6 +5,7 @@
  * Version: 6.0.0
  * Author: Bijoy
  * Author URI: https://bijoy.dev
+ * Requires Plugins: woocommerce
  */
 
 if ( ! defined('ABSPATH') ) exit;
@@ -21,6 +22,12 @@ include_once HEO_PLUGIN_DIR . 'includes/product-setup.php';
 include_once HEO_PLUGIN_DIR . 'includes/product-upload.php';
 
 class HEO_WC_Importer {
+    // Create instance
+    private static $instance = null;
+    public static function get_instance(){
+        if(self::$instance == null) self::$instance = new self();
+        return self::$instance;
+    }
     const PAGE_SLUG = 'heo-wc-importer';
     const OPT = 'heo_wc_importer_settings'; // Option name 
     const LOG_TRANSIENT = 'heo_wc_import_log';
@@ -47,7 +54,6 @@ class HEO_WC_Importer {
         // Action Scheduler (positional single arg)
         add_action('heo_wc_seed_page', [$this, 'seed_page_job']);
         add_action('heo_wc_import_single', [$this, 'upsert_product']);
-        add_action('admin_post_heo_run_sync', [$this, 'handle_product_manual_sync']);
         
         add_action('admin_post_heo_run_regular_sync', [$this, 'handle_regular_sync']);
         add_action(self::DAILY_CHECK_SCHEDULAR, [$this, 'seed_regular_sync_job']);
@@ -59,29 +65,24 @@ class HEO_WC_Importer {
         $this->stock_status_init();
     }
 
-    public function handle_product_manual_sync(){
-        $this->seed_page_job(1);
-        wp_safe_redirect(add_query_arg(['page'=>self::PAGE_SLUG], admin_url('admin.php'))); 
-        exit;
-    }
-
     public function seed_page_job($page = 1){
         $response = $this->api_get_info(['page' => $page]);
         if ($response) {
             $i = 1;
             foreach($response['content'] as $each_product){
+                if(empty($each_product['productNumber']) || wc_get_product_id_by_sku($each_product['productNumber'])) continue;
                 $minifyed_data = $this->minify_product_payload($each_product);
                 if ( !as_next_scheduled_action( 'heo_wc_import_single', $minifyed_data ) ) {
                     as_schedule_single_action( time() + self::AS_SPACING * $i, 'heo_wc_import_single', [$minifyed_data],  self::AS_GROUP);
                     // $this->log('new Product Shecduleed: '. $i);
+                    $i++;
                 }
-                $i++;
             }    
         }
 
         $next_page = $page + 1;
         if ( !as_next_scheduled_action('heo_wc_seed_page', [$next_page]) && $response['pagination']['totalPages'] >= $next_page) {
-            as_schedule_single_action( time() + (self::AS_SPACING * self::BATCH), 'heo_wc_seed_page', [$next_page],  self::AS_GROUP);
+            as_schedule_single_action( time() + (self::AS_SPACING * $i), 'heo_wc_seed_page', [$next_page],  self::AS_GROUP);
             // $this->log('Next page event Add: '.$next_page);
         }
     }
@@ -125,7 +126,10 @@ class HEO_WC_Importer {
                 if ($sku === '') continue;
 
                 $product_id = wc_get_product_id_by_sku($sku);
-                if(!$product_id) continue;
+                if(!$product_id){
+                    $this->single_product_upload($sku);
+                    continue;
+                } 
 
                 $product = wc_get_product( $product_id );
                 if(!$product) continue;
@@ -177,12 +181,12 @@ class HEO_WC_Importer {
                 if ($sku === '') continue;
 
                 $product_id = wc_get_product_id_by_sku($sku);
-                if(!$product_id) continue;
-
-                $product = wc_get_product( $product_id );
-                if(!$product) continue;
+                if(!$product_id){
+                    $this->single_product_upload($sku);
+                    continue;
+                }
                 
-				$current_stock_status = $product->get_stock_status();
+				$current_stock_status = get_post_meta($product_id, '_stock_status', true);
                 if ( $current_stock_status === 'instock' ){
                     $this->log('Product in stock, skipping price Update for SKU: '.$sku);
                     continue;
@@ -190,6 +194,7 @@ class HEO_WC_Importer {
 				
                 $regular_price = false;
                 $sale_price = false;
+                
                 // Setup the price
                 if($each_product['strikePricePerUnit']['amount'] && $each_product['basePricePerUnit']['amount']){
                     $regular_price = $each_product['strikePricePerUnit']['amount'];
@@ -199,17 +204,18 @@ class HEO_WC_Importer {
                 }else{
                     continue;
                 }
-                $regular_price = trim($regular_price);
-                $sale_price = trim($sale_price);
-                $current_regular_price = trim($product->get_regular_price());
-                $current_sale_price = trim($product->get_sale_price());
+                $regular_price = (int) trim($regular_price);
+                $sale_price = (int) trim($sale_price);
+                $current_regular_price = (int) trim( get_post_meta($product_id, '_server_regular_price', true));
+                $current_sale_price =  (int) trim(get_post_meta($product_id, '_server_sale_price', true));
 
                 if($current_regular_price == $regular_price && $current_sale_price == $sale_price) continue;
 
-                if($regular_price) $product->set_regular_price($regular_price);
-                if($sale_price) $product->set_sale_price($sale_price);
+                if($regular_price) update_post_meta($product_id, '_server_regular_price', $regular_price);
+                if($sale_price) update_post_meta($product_id, '_server_sale_price', $sale_price);
 
-                $product_id = $product->save();
+                $this->product_price_calculator($product_id);
+
                 $this->log('Price updated for SKU: '.$sku.', ID: '. $product_id);
             } 
         }
@@ -242,5 +248,26 @@ class HEO_WC_Importer {
 		return $price ;
     }
 
+    private function single_product_upload($sku){
+        if ($sku === '') return false;
+
+        $product_data = $this->api_get_info([ 'sku' => $sku, 'api_type' => 'products']);
+        if($product_data && !empty($product_data['content'])){
+            $product_data = $product_data['content'][0];
+        }else{
+            $this->log('No product info found for SKU '.$sku);
+            return false;
+        }
+
+        if(empty($product_data['productNumber'])) return;
+        $minifyed_data = $this->minify_product_payload($product_data);
+        if ( !as_next_scheduled_action( 'heo_wc_import_single', $minifyed_data ) ) {
+            as_schedule_single_action( time() + self::AS_SPACING, 'heo_wc_import_single', [$minifyed_data],  self::AS_GROUP);
+        }
+        return true;
+    }
+
 }
-new HEO_WC_Importer();
+
+// Initialize the plugin
+HEO_WC_Importer::get_instance();

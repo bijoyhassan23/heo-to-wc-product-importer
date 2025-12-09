@@ -164,6 +164,75 @@ trait Product_upload{
         if($update_image_status) $product_id = $product->save();
     }
 
+    private function product_stock_and_price_update($params = []){
+        $defults = ['product_id' => false, 'sku' => false , 'price_info' => [], 'availability_info' => [], 'sync' => 'both', 'price' => null];
+        $params = wp_parse_args( $params, $defults );
+        ['product_id' => $product_id, 'sku' => $sku, 'price_info' => $price_info, 'availability_info' => $availability_info, 'sync' => $sync, 'price' => $price] = $params;
+        if(!$product_id) return false;
+        try{
+            if($sync === 'both' || $sync === 'price'){
+                if(empty($price_info)){
+                    if(!$sku) $sku = get_post_meta( $product_id, '_sku', true );
+                    $price_info = $this->api_get_info([ 'sku' => $sku, 'api_type' => 'prices']);
+                    if($price_info && !empty($price_info['content'])){
+                        $price_info = $price_info['content'][0];
+                    }else{
+                        $this->log('No Price info found for SKU '.$sku);
+                        $price_info = [ 'basePricePerUnit' => ['amount'=> null], 'strikePricePerUnit' => null, 'discountedPricePerUnit' => ['amount'=> null] ];
+                    }
+                }
+
+                if($price_info['strikePricePerUnit']['amount'] && $price_info['basePricePerUnit']['amount']){
+                    update_post_meta($product_id, '_server_regular_price', $price_info['strikePricePerUnit']['amount']);
+                    update_post_meta($product_id, '_server_sale_price', $price_info['basePricePerUnit']['amount']);
+                }elseif(!$price_info['strikePricePerUnit'] && $price_info['basePricePerUnit']['amount']){
+                    update_post_meta($product_id, '_server_regular_price', $price_info['basePricePerUnit']['amount']);                
+                }else{
+                    update_post_meta($product_id, '_server_regular_price', $price);            
+                }
+                $this->product_price_calculator($product_id);
+            }
+        }catch(Exception $e){
+            $this->log('Price update error for product ID '.$product_id.' : '.$e->getMessage());
+        }
+
+        try{
+            if($sync === 'both' || $sync === 'availability'){
+                if(empty($availability_info)){
+                    if(!$sku) $sku = get_post_meta( $product_id, '_sku', true );
+                    $availability_info = $this->api_get_info([ 'sku' => $sku, 'api_type' => 'availabilities']);
+                    if($availability_info && !empty($availability_info['content'])){
+                        $availability_info = $availability_info['content'][0];
+                    }else{
+                        $this->log('No availability info found for SKU '.$sku);
+                        $availability_info = ['availabilityState' => '', 'availableToOrder' => false, 'eta' => null, 'availability' => null];
+                    }
+                }
+
+                ['availableToOrder' => $availableToOrder, 'eta' => $eta, 'availabilityState' => $availabilityState] = $availability_info;
+                $current_stock_status = get_post_meta($product_id, '_stock_status', true);
+                $currnet_eta = get_post_meta( $product_id, '_eta_deadline', true );
+                $currnet_eta = trim($currnet_eta);
+                $preorderDeadline = get_post_meta( $product_id, '_preorder_deadline', true );
+
+                if(($preorderDeadline && (strtotime($preorderDeadline) > time())) || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
+                    $query_stock_status = 'preorder';
+                }elseif($availabilityState === 'AVAILABLE' && $availableToOrder){
+                    $query_stock_status = 'at_supplier';
+                }else{
+                    $query_stock_status = 'outofstock';
+                }
+
+                if(!($current_stock_status === $query_stock_status && $currnet_eta === $eta)){
+                    if($query_stock_status) wc_update_product_stock_status( $product_id, $query_stock_status );
+                    if($eta) update_post_meta($product_id, '_eta_deadline', $eta);
+                }
+            }
+        }catch(Exception $e){
+            $this->log('Availability update error for product ID '.$product_id.' : '.$e->getMessage());
+        }
+    }
+
     public function upsert_product(array $p){
         $sku = $p['productNumber'] ?? ''; 
         if ($sku === '') return 0;
@@ -179,25 +248,8 @@ trait Product_upload{
             $this->log('The Product is already Updaloded SKU: '.$sku.', ID: '. $product_id);
             return false;
         }
-
-        $availability_info = $this->api_get_info([ 'sku' => $sku, 'api_type' => 'availabilities']);
-        if($availability_info && !empty($availability_info['content'])){
-            $availability_info = $availability_info['content'][0];
-        }else{
-            $this->log('No availability info found for SKU '.$sku);
-            $availability_info = ['availabilityState' => '', 'availableToOrder' => false, 'eta' => null];
-        }
-
-        $price_info = $this->api_get_info([ 'sku' => $sku, 'api_type' => 'prices']);
-        if($price_info && !empty($price_info['content'])){
-            $price_info = $price_info['content'][0];
-        }else{
-            $this->log('No Price info found for SKU '.$sku);
-            $price_info = [ 'basePricePerUnit' => ['amount'=> null], 'strikePricePerUnit' => null, 'discountedPricePerUnit' => ['amount'=> null] ];
-        }
         
         ['title' => $title, 'description' => $description, 'prices' => ['basePricePerUnit' => ['amount'=> $price]], 'manufacturers' => $manufacturers, 'categories' => $categories, 'themes' => $themes, 'media' => $media, 'preorderDeadline' => $preorderDeadline, 'dimensions' => $dimensions, 'types' => $types, 'barcodes' => $barcodes] = $p;
-        ['availableToOrder' => $availableToOrder, 'eta' => $eta, 'availabilityState' => $availabilityState] = $availability_info;
 
         $categories = $this->insert_product_tax($categories, 'product_cat');
 
@@ -207,28 +259,6 @@ trait Product_upload{
         $product->set_description($description);
         $product->set_status('publish');
         $product->set_category_ids( $categories );
-
-        // Setup the price
-        if($price_info['strikePricePerUnit']['amount'] && $price_info['basePricePerUnit']['amount']){
-            $product->update_meta_data('_server_regular_price', $price_info['strikePricePerUnit']['amount']);
-            $product->update_meta_data('_server_sale_price', $price_info['basePricePerUnit']['amount']);
-        }elseif(!$price_info['strikePricePerUnit'] && $price_info['basePricePerUnit']['amount']){
-            $product->update_meta_data('_server_regular_price', $price_info['basePricePerUnit']['amount']);            
-        }else{
-            $product->update_meta_data('_server_regular_price', $price);
-        }
-        
-        // Pre order
-        if($preorderDeadline || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
-            $product->set_stock_status('preorder');
-        }elseif($availabilityState === 'AVAILABLE' && $availableToOrder){
-            $product->set_stock_status('at_supplier');
-        }else{
-            $product->set_stock_status('outofstock');
-        }
-
-        if($preorderDeadline) $product->update_meta_data('_preorder_deadline', $preorderDeadline);
-        if($eta) $product->update_meta_data('_eta_deadline', $eta);
 
         if($barcodes){
             foreach($barcodes as $barcode){
@@ -246,6 +276,8 @@ trait Product_upload{
         if($dimensions['weight']) $product->set_weight($dimensions['weight']['value'] / 1000);
 
         $product_id = $product->save();
+
+        $this->product_stock_and_price_update(['product_id'=> $product_id, 'price' => $price]);
 
         $brands = $this->insert_product_tax($manufacturers, 'product_brand');
         wp_set_object_terms( $product_id, $brands, 'product_brand' );

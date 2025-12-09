@@ -5,6 +5,7 @@ trait Admin_part{
         add_action('admin_menu', [$this, 'add_admin_page']);
         add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_post_heo_clear_log', [$this, 'handle_clear_log']);
+        add_action('admin_post_heo_run_sync', [$this, 'handle_product_manual_sync']);
     }
 
     public function add_admin_page() {
@@ -207,5 +208,11 @@ trait Admin_part{
         $opts['pass_sbx']        = $this->trim_cred($opts['pass_sbx'] ?? '');
         $opts['pre_order_discount']        = $this->trim_cred($opts['pre_order_discount'] ?? 1);
         return $opts;
+    }
+
+    public function handle_product_manual_sync(){
+        $this->seed_page_job(1);
+        wp_safe_redirect(add_query_arg(['page'=>self::PAGE_SLUG], admin_url('admin.php'))); 
+        exit;
     }
 }
