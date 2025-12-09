@@ -4,6 +4,7 @@ trait Admin_part{
     private function admin_init(){
         add_action('admin_menu', [$this, 'add_admin_page']);
         add_action('admin_init', [$this, 'register_settings']);
+        add_action('admin_post_heo_clear_log', [$this, 'handle_clear_log']);
     }
 
     public function add_admin_page() {

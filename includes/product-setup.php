@@ -11,6 +11,38 @@ trait Product_setup{
         // Brand functionality
         add_action('product_brand_edit_form_fields', [$this, 'brand_fild_rendard'], 20, 1);
         add_action('edited_product_brand', [$this, 'brand_fild_save'], 10, 1);
+
+
+        add_action('admin_head', function () {
+            if(!(isset($_GET['post']) && get_post_type($_GET['post']) === 'product') && !(isset($_GET['post_type']) && $_GET['post_type'] === 'product')) return;
+            
+            ?>
+                <style>
+                    .woocommerce_options_panel input[type=date]{
+                        width: 50%;
+                        float: left;
+                    }
+                </style>
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const getPriceLock = document.querySelector('#_enable_price_lock');
+                        if(getPriceLock){
+                            const regularPriceFild = document.querySelector('#_regular_price');
+                            const salePriceFild = document.querySelector('#_sale_price');
+                            
+                            function changeFun(desabledStatus){
+                                regularPriceFild.disabled = !getPriceLock.checked;
+                                salePriceFild.disabled = !getPriceLock.checked;
+                            }
+
+                            changeFun();
+
+                            getPriceLock.addEventListener('change', changeFun);
+                        }
+                    });
+                </script>
+            <?php            
+        });
     }
 
     public function register_product_taxonomy() {
@@ -66,6 +98,29 @@ trait Product_setup{
     }
 
     public function heo_add_custom_product_field_for_general() {
+        woocommerce_wp_checkbox([
+            'id'          => '_enable_price_lock',
+            'label'       => __('Price Lock', 'woocommerce'),
+            'description' => __('Check this to use custom price.', 'woocommerce'),
+        ]);
+
+        woocommerce_wp_text_input([
+            'id'          => '_server_regular_price',
+            'label'       => __('Server Regular Price', 'woocommerce'),
+            'desc_tip'    => true,
+            'description' => __('This Price Will autometically come from server. Override if it\'s not comming.', 'woocommerce'),
+            'type'        => 'number',
+            'placeholder' => 'Price will come from server'
+        ]);
+
+        woocommerce_wp_text_input([
+            'id'          => '_server_sale_price',
+            'label'       => __('Server Sale Price', 'woocommerce'),
+            'desc_tip'    => true,
+            'description' => __('This Price Will autometically come from server. Override if it\'s not comming.', 'woocommerce'),
+            'type'        => 'number',
+            'placeholder' => 'Price will come from server'
+        ]);
 
         // Preorder functionality
         woocommerce_wp_text_input([
@@ -83,6 +138,20 @@ trait Product_setup{
             'desc_tip'    => true,
             'description' => __('Select the deadline date for ETA.', 'woocommerce'),
             'type'        => 'date',
+        ]);
+
+        global $post;
+        $timestamp = get_post_meta($post->ID, '_last_update', true);
+        $readable = $timestamp ? date('Y-m-d H:i:s', $timestamp) : '—';
+
+        woocommerce_wp_text_input([
+            'id'          => '_last_update',
+            'label'       => __('Last Update', 'woocommerce'),
+            'desc_tip'    => true,
+            'description' => __('Product Last update Time and date.', 'woocommerce'),
+            'type'        => 'text',
+            'value'             => $readable, 
+            'custom_attributes' => ['disabled' => 'disabled'],
         ]);
     }
 
@@ -102,10 +171,16 @@ trait Product_setup{
     }
 
     public function heo_save_custom_field_data($product) {
+        if (isset($_POST['_server_regular_price'])) $product->update_meta_data('_server_regular_price', sanitize_text_field($_POST['_server_regular_price']));
+        if (isset($_POST['_server_sale_price']))    $product->update_meta_data('_server_sale_price', sanitize_text_field($_POST['_server_sale_price']));
         if (isset($_POST['_preorder_deadline']))    $product->update_meta_data('_preorder_deadline', sanitize_text_field($_POST['_preorder_deadline']));
         if (isset($_POST['_eta_deadline']))         $product->update_meta_data('_eta_deadline', sanitize_text_field($_POST['_eta_deadline']));
         if (isset($_POST['_product_barcode_type'])) $product->update_meta_data('_product_barcode_type', sanitize_text_field($_POST['_product_barcode_type']));
         if (isset($_POST['_product_barcode']))      $product->update_meta_data('_product_barcode', sanitize_text_field($_POST['_product_barcode']));
+
+        $product->update_meta_data('_enable_price_lock', isset($_POST['_enable_price_lock']) ? 'yes' : 'no');
+        $product->update_meta_data('_last_update', time());
+        $this->product_price_calculator($product->get_id());
     }
 
     public function brand_fild_rendard($term){
@@ -253,5 +328,4 @@ trait Product_setup{
             delete_term_meta($term_id, $meta_key);
         }
     }
-
 }
