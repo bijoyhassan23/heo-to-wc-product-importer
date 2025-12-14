@@ -1,6 +1,6 @@
 <?php
 
-trait Product_upload{
+trait HEO_WC_Product_upload{
     private function product_upload_init(){
         
     }
@@ -169,6 +169,10 @@ trait Product_upload{
         $params = wp_parse_args( $params, $defults );
         ['product_id' => $product_id, 'sku' => $sku, 'price_info' => $price_info, 'availability_info' => $availability_info, 'sync' => $sync, 'price' => $price] = $params;
         if(!$product_id) return false;
+        $update_message = [
+            'price_updated' => false,
+            'availability_updated' => false
+        ];
         try{
             if($sync === 'both' || $sync === 'price'){
                 if(empty($price_info)){
@@ -181,16 +185,23 @@ trait Product_upload{
                         $price_info = [ 'basePricePerUnit' => ['amount'=> null], 'strikePricePerUnit' => null, 'discountedPricePerUnit' => ['amount'=> null] ];
                     }
                 }
-
-                if($price_info['strikePricePerUnit']['amount'] && $price_info['basePricePerUnit']['amount']){
-                    update_post_meta($product_id, '_server_regular_price', $price_info['strikePricePerUnit']['amount']);
-                    update_post_meta($product_id, '_server_sale_price', $price_info['basePricePerUnit']['amount']);
-                }elseif(!$price_info['strikePricePerUnit'] && $price_info['basePricePerUnit']['amount']){
-                    update_post_meta($product_id, '_server_regular_price', $price_info['basePricePerUnit']['amount']);                
-                }else{
-                    update_post_meta($product_id, '_server_regular_price', $price);            
+                $strike_price  = $price_info['strikePricePerUnit']['amount'] ?? null;
+                $base_price    = $price_info['basePricePerUnit']['amount'] ?? null;
+                $current_regular_price = get_post_meta($product_id, '_server_regular_price', true);
+                $current_sale_price = get_post_meta($product_id, '_server_sale_price', true);
+                
+                if($strike_price != $current_regular_price || $base_price != $current_sale_price){
+                    if($strike_price && $base_price){
+                        update_post_meta($product_id, '_server_regular_price', $strike_price);
+                        update_post_meta($product_id, '_server_sale_price', $base_price);
+                    }elseif(!$strike_price && $base_price){
+                        update_post_meta($product_id, '_server_regular_price', $base_price);                
+                    }else{
+                        update_post_meta($product_id, '_server_regular_price', $price);            
+                    }
+                    $this->product_price_calculator($product_id);
+                    $update_message['price_updated'] = true;
                 }
-                $this->product_price_calculator($product_id);
             }
         }catch(Exception $e){
             $this->log('Price update error for product ID '.$product_id.' : '.$e->getMessage());
@@ -226,11 +237,14 @@ trait Product_upload{
                 if(!($current_stock_status === $query_stock_status && $currnet_eta === $eta)){
                     if($query_stock_status) wc_update_product_stock_status( $product_id, $query_stock_status );
                     if($eta) update_post_meta($product_id, '_eta_deadline', $eta);
+                    $update_message['availability_updated'] = true;
                 }
             }
         }catch(Exception $e){
             $this->log('Availability update error for product ID '.$product_id.' : '.$e->getMessage());
         }
+
+        return $update_message;
     }
 
     public function upsert_product(array $p){
@@ -270,10 +284,10 @@ trait Product_upload{
             }
         }
 
-        if($dimensions['width']) $product->set_width($dimensions['width']['value'] / 10);
-        if($dimensions['length']) $product->set_length($dimensions['length']['value'] / 10);
-        if($dimensions['height']) $product->set_height($dimensions['height']['value'] / 10);
-        if($dimensions['weight']) $product->set_weight($dimensions['weight']['value'] / 1000);
+        foreach (['width' => 10, 'length' => 10, 'height' => 10, 'weight' => 1000] as $key => $divider) {
+            $value = $dimensions[$key]['value'] ?? null;
+            if ($value) $product->{"set_$key"}($value / $divider);
+        }
 
         $product_id = $product->save();
 

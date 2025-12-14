@@ -1,6 +1,6 @@
 <?php
 
-trait Stock_status{
+trait HEO_WC_Stock_status{
     private function stock_status_init(){
         add_filter('woocommerce_product_stock_status_options', [$this, 'add_custom_stock_status']);
         add_filter('woocommerce_product_stock_status',         [$this, 'woocomerce_recognize'], 10, 2);

@@ -15,11 +15,15 @@ define('HEO_PLUGIN_URL', plugin_dir_url( __FILE__ ));
 define('HEO_PLUGIN_VERSION', '6.0.0');
 
 // Include necessary files
-include_once HEO_PLUGIN_DIR . 'includes/stock-status.php';
-include_once HEO_PLUGIN_DIR . 'includes/admin-part.php';
-include_once HEO_PLUGIN_DIR . 'includes/general-function.php';
-include_once HEO_PLUGIN_DIR . 'includes/product-setup.php';
-include_once HEO_PLUGIN_DIR . 'includes/product-upload.php';
+spl_autoload_register(function ($class_name) {
+    if (strpos($class_name, 'HEO_WC_') === 0) {
+        $file_name = strtolower($class_name) . '.php';
+        $file_path = HEO_PLUGIN_DIR . 'includes/' . $file_name;
+        if (file_exists($file_path)) {
+            include_once $file_path;
+        }
+    }
+});
 
 class HEO_WC_Importer {
     // Create instance
@@ -35,13 +39,13 @@ class HEO_WC_Importer {
     const LANG_CODE = 'EN';
 
     const AS_GROUP   = 'heo_wc_importer_queue';
-    const AS_SPACING = 20;
-    const BATCH = 50;
+    const AS_SPACING = 10;
+    const BATCH = 5;
 
     const DAILY_CHECK_SCHEDULAR = 'heo_wc_regular_seed_page';
     const EACH_REGULAR_SYNC = 'heo_wc_regular_each_seed_page';
 
-    use General_function, Admin_part, Stock_status, Product_setup, Product_upload;
+    use HEO_WC_General_function, HEO_WC_Admin_part, HEO_WC_Stock_status, HEO_WC_Product_setup, HEO_WC_Product_upload;
     public function __construct() {
 
         $this->general_function_init();
@@ -66,6 +70,7 @@ class HEO_WC_Importer {
     }
 
     public function seed_page_job($page = 1){
+        $this->log('Seeding page job started for page: '.$page);
         $response = $this->api_get_info(['page' => $page]);
         if ($response) {
             $i = 1;
@@ -78,6 +83,10 @@ class HEO_WC_Importer {
                     $i++;
                 }
             }    
+        }else{
+            $this->log('No response from API for page: '.$page);
+            $this->log(json_encode($response));
+            return;
         }
 
         $next_page = $page + 1;
@@ -131,37 +140,8 @@ class HEO_WC_Importer {
                     continue;
                 } 
 
-                $product = wc_get_product( $product_id );
-                if(!$product) continue;
-
-                ['availabilityState' => $availabilityState, 'availableToOrder' => $availableToOrder, 'eta' => $eta] = $each_product;
-                $eta = trim($eta);
-
-                $current_stock_status = $product->get_stock_status();
-                if ( $current_stock_status === 'instock' ){
-                    $this->log('Product in stock, skipping SKU: '.$sku);
-                    continue;
-                }
-
-                $currnet_eta = get_post_meta( $product_id, '_eta_deadline', true );
-                $currnet_eta = trim($currnet_eta);
-                $preorderDeadline = get_post_meta( $product_id, '_preorder_deadline', true );
-
-                if(($preorderDeadline && (strtotime($preorderDeadline) > time())) || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
-                    $query_stock_status = 'preorder';
-                }elseif($availabilityState === 'AVAILABLE' && $availableToOrder){
-                    $query_stock_status = 'at_supplier';
-                }else{
-                    $query_stock_status = 'outofstock';
-                }
-
-                if($current_stock_status === $query_stock_status && $currnet_eta === $eta) continue;
-
-                if($query_stock_status) $product->set_stock_status($query_stock_status);
-                if($eta) $product->update_meta_data('_eta_deadline', $eta);
-
-                $product_id = $product->save();
-                $this->log('Stock updated for SKU: '.$sku.', ID: '. $product_id);
+                $update_status = $this->product_stock_and_price_update(['product_id' => $product_id, 'sku' => $sku, 'availability_info' => $each_product, 'sync' => 'availability']);
+                if($update_status['availability_updated']) $this->log('Stock updated for SKU: '.$sku.', ID: '. $product_id);
             } 
         }
 
@@ -186,37 +166,10 @@ class HEO_WC_Importer {
                     continue;
                 }
                 
-				$current_stock_status = get_post_meta($product_id, '_stock_status', true);
-                if ( $current_stock_status === 'instock' ){
-                    $this->log('Product in stock, skipping price Update for SKU: '.$sku);
-                    continue;
+                $update_status = $this->product_stock_and_price_update(['product_id' => $product_id, 'sku' => $sku, 'price_info' => $each_product, 'sync' => 'price']);
+                if($update_status['price_updated']){
+                    $this->log('Price updated for SKU: '.$sku.', ID: '. $product_id);
                 }
-				
-                $regular_price = false;
-                $sale_price = false;
-                
-                // Setup the price
-                if($each_product['strikePricePerUnit']['amount'] && $each_product['basePricePerUnit']['amount']){
-                    $regular_price = $each_product['strikePricePerUnit']['amount'];
-                    $sale_price = $each_product['basePricePerUnit']['amount'];
-                }elseif(!$each_product['strikePricePerUnit'] && $each_product['basePricePerUnit']['amount']){
-                    $regular_price = $each_product['basePricePerUnit']['amount'];
-                }else{
-                    continue;
-                }
-                $regular_price = (int) trim($regular_price);
-                $sale_price = (int) trim($sale_price);
-                $current_regular_price = (int) trim( get_post_meta($product_id, '_server_regular_price', true));
-                $current_sale_price =  (int) trim(get_post_meta($product_id, '_server_sale_price', true));
-
-                if($current_regular_price == $regular_price && $current_sale_price == $sale_price) continue;
-
-                if($regular_price) update_post_meta($product_id, '_server_regular_price', $regular_price);
-                if($sale_price) update_post_meta($product_id, '_server_sale_price', $sale_price);
-
-                $this->product_price_calculator($product_id);
-
-                $this->log('Price updated for SKU: '.$sku.', ID: '. $product_id);
             } 
         }
 

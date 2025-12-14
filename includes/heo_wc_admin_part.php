@@ -1,6 +1,6 @@
 <?php
 
-trait Admin_part{
+trait HEO_WC_Admin_part{
     private function admin_init(){
         add_action('admin_menu', [$this, 'add_admin_page']);
         add_action('admin_init', [$this, 'register_settings']);
@@ -46,8 +46,8 @@ trait Admin_part{
                         </td>
                     </tr>
                     <tr><th scope="row"><label>Username</label></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[username]" value="<?php echo esc_attr($username); ?>" class="regular-text" required></td></tr>
-                    <tr><th scope="row"><label>Sandbox Password</label></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[pass_sbx]" value="<?php echo esc_attr($pass_sbx); ?>" class="regular-text" autocomplete="new-password"></td></tr>
-                    <tr><th scope="row"><label>Production Password</label></th><td><input type="password" name="<?php echo esc_attr(self::OPT); ?>[pass_prod]" value="<?php echo esc_attr($pass_prod); ?>" class="regular-text" autocomplete="new-password"></td></tr>
+                    <tr><th scope="row"><label>Sandbox Password</label></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[pass_sbx]" value="<?php echo esc_attr($pass_sbx); ?>" class="regular-text" autocomplete="new-password"></td></tr>
+                    <tr><th scope="row"><label>Production Password</label></th><td><input type="text" name="<?php echo esc_attr(self::OPT); ?>[pass_prod]" value="<?php echo esc_attr($pass_prod); ?>" class="regular-text" autocomplete="new-password"></td></tr>
                     <tr><th scope="row"><label>Preorder Discount (%)</label></th><td><input style='width: 65px' type="number" step="0.01" name="<?php echo esc_attr(self::OPT); ?>[pre_order_discount]" value="<?php echo esc_attr($pre_order_discount); ?>" class="regular-text" ></td></tr>
                     
                     <!-- Price Multiplier -->
@@ -211,6 +211,7 @@ trait Admin_part{
     }
 
     public function handle_product_manual_sync(){
+        $this->log('Manual sync triggered by user.');
         $this->seed_page_job(1);
         wp_safe_redirect(add_query_arg(['page'=>self::PAGE_SLUG], admin_url('admin.php'))); 
         exit;

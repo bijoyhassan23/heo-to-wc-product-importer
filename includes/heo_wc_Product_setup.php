@@ -1,6 +1,6 @@
 <?php
 
-trait Product_setup{
+trait HEO_WC_Product_setup{
     private function product_setup_init(){
         add_action('init', [$this, 'register_product_taxonomy']);
 
@@ -15,7 +15,6 @@ trait Product_setup{
 
         add_action('admin_head', function () {
             if(!(isset($_GET['post']) && get_post_type($_GET['post']) === 'product') && !(isset($_GET['post_type']) && $_GET['post_type'] === 'product')) return;
-            $this->product_stock_and_price_update(['product_id'=> '96039']);
             ?>
                 <style>
                     .woocommerce_options_panel input[type=date]{

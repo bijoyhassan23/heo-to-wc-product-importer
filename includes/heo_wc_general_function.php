@@ -1,6 +1,6 @@
 <?php
 
-trait General_function{
+trait HEO_WC_General_function{
 
     private function general_function_init(){
         add_filter( 'manage_edit-product_columns', [$this, 'keep_date_column_last'], 20 );
