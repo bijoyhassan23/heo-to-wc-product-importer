@@ -189,19 +189,25 @@ trait HEO_WC_Product_upload{
                 $base_price    = $price_info['basePricePerUnit']['amount'] ?? null;
                 $current_regular_price = get_post_meta($product_id, '_server_regular_price', true);
                 $current_sale_price = get_post_meta($product_id, '_server_sale_price', true);
-                
-                if($strike_price != $current_regular_price || $base_price != $current_sale_price){
-                    if($strike_price && $base_price){
-                        update_post_meta($product_id, '_server_regular_price', $strike_price);
-                        update_post_meta($product_id, '_server_sale_price', $base_price);
-                    }elseif(!$strike_price && $base_price){
-                        update_post_meta($product_id, '_server_regular_price', $base_price);                
-                    }else{
-                        update_post_meta($product_id, '_server_regular_price', $price);            
-                    }
-                    $this->product_price_calculator($product_id);
+
+                if($strike_price) $strike_price = (int) $strike_price;
+                if($base_price) $base_price = (int) $base_price;
+                if($current_regular_price) $current_regular_price = (int) $current_regular_price;
+                if($current_sale_price) $current_sale_price = (int) $current_sale_price;
+
+                if($strike_price && $base_price && ($strike_price != $current_regular_price || $base_price != $current_sale_price)){
+                    update_post_meta($product_id, '_server_regular_price', $strike_price);
+                    update_post_meta($product_id, '_server_sale_price', $base_price);
                     $update_message['price_updated'] = true;
+                }elseif(!$strike_price && $base_price && $base_price != $current_regular_price){
+                    update_post_meta($product_id, '_server_regular_price', $base_price);  
+                    $update_message['price_updated'] = true;              
+                }elseif($price && $price != $current_regular_price){
+                    update_post_meta($product_id, '_server_regular_price', $price);   
+                    $update_message['price_updated'] = true;         
                 }
+
+                if($update_message['price_updated']) $this->product_price_calculator($product_id);
             }
         }catch(Exception $e){
             $this->log('Price update error for product ID '.$product_id.' : '.$e->getMessage());
@@ -221,10 +227,11 @@ trait HEO_WC_Product_upload{
                 }
 
                 ['availableToOrder' => $availableToOrder, 'eta' => $eta, 'availabilityState' => $availabilityState] = $availability_info;
-                $current_stock_status = get_post_meta($product_id, '_stock_status', true);
-                $currnet_eta = get_post_meta( $product_id, '_eta_deadline', true );
-                $currnet_eta = trim($currnet_eta);
-                $preorderDeadline = get_post_meta( $product_id, '_preorder_deadline', true );
+                $current_stock_status = trim(get_post_meta($product_id, '_stock_status', true));
+                $currnet_eta = trim(get_post_meta( $product_id, '_eta_deadline', true ));
+                $preorderDeadline = trim(get_post_meta( $product_id, '_preorder_deadline', true ));
+                $eta = trim($eta);
+                $availabilityState = trim($availabilityState);
 
                 if(($preorderDeadline && (strtotime($preorderDeadline) > time())) || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
                     $query_stock_status = 'preorder';

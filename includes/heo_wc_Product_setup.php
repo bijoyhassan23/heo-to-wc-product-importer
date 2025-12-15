@@ -46,17 +46,17 @@ trait HEO_WC_Product_setup{
 
     public function register_product_taxonomy() {
         $labels_series = [
-            'name'              => _x( 'Series', 'taxonomy general name', 'heo-woo-importer' ),
-            'singular_name'     => _x( 'Series', 'taxonomy singular name', 'heo-woo-importer' ),
-            'search_items'      => __( 'Search Series', 'heo-woo-importer' ),
-            'all_items'         => __( 'All Series', 'heo-woo-importer' ),
-            'parent_item'       => __( 'Parent Series', 'heo-woo-importer' ),
-            'parent_item_colon' => __( 'Parent Series:', 'heo-woo-importer' ),
-            'edit_item'         => __( 'Edit Series', 'heo-woo-importer' ),
-            'update_item'       => __( 'Update Series', 'heo-woo-importer' ),
-            'add_new_item'      => __( 'Add New Series', 'heo-woo-importer' ),
-            'new_item_name'     => __( 'New Series Name', 'heo-woo-importer' ),
-            'menu_name'         => __( 'Series', 'heo-woo-importer' ),
+            'name'              => _x( 'Series', 'taxonomy general name', 'heo-to-wc-product-importer' ),
+            'singular_name'     => _x( 'Series', 'taxonomy singular name', 'heo-to-wc-product-importer' ),
+            'search_items'      => __( 'Search Series', 'heo-to-wc-product-importer' ),
+            'all_items'         => __( 'All Series', 'heo-to-wc-product-importer' ),
+            'parent_item'       => __( 'Parent Series', 'heo-to-wc-product-importer' ),
+            'parent_item_colon' => __( 'Parent Series:', 'heo-to-wc-product-importer' ),
+            'edit_item'         => __( 'Edit Series', 'heo-to-wc-product-importer' ),
+            'update_item'       => __( 'Update Series', 'heo-to-wc-product-importer' ),
+            'add_new_item'      => __( 'Add New Series', 'heo-to-wc-product-importer' ),
+            'new_item_name'     => __( 'New Series Name', 'heo-to-wc-product-importer' ),
+            'menu_name'         => __( 'Series', 'heo-to-wc-product-importer' ),
         ];
 
         $args_series = [
@@ -71,17 +71,17 @@ trait HEO_WC_Product_setup{
         register_taxonomy( 'series', ['product'], $args_series );
 
         $labels_product_type = [
-            'name'              => _x( 'Type', 'taxonomy general name', 'heo-woo-importer' ),
-            'singular_name'     => _x( 'Type', 'taxonomy singular name', 'heo-woo-importer' ),
-            'search_items'      => __( 'Search Type', 'heo-woo-importer' ),
-            'all_items'         => __( 'All Type', 'heo-woo-importer' ),
-            'parent_item'       => __( 'Parent Type', 'heo-woo-importer' ),
-            'parent_item_colon' => __( 'Parent Type:', 'heo-woo-importer' ),
-            'edit_item'         => __( 'Edit Type', 'heo-woo-importer' ),
-            'update_item'       => __( 'Update Type', 'heo-woo-importer' ),
-            'add_new_item'      => __( 'Add New Type', 'heo-woo-importer' ),
-            'new_item_name'     => __( 'New Type Name', 'heo-woo-importer' ),
-            'menu_name'         => __( 'Type', 'heo-woo-importer' ),
+            'name'              => _x( 'Type', 'taxonomy general name', 'heo-to-wc-product-importer' ),
+            'singular_name'     => _x( 'Type', 'taxonomy singular name', 'heo-to-wc-product-importer' ),
+            'search_items'      => __( 'Search Type', 'heo-to-wc-product-importer' ),
+            'all_items'         => __( 'All Type', 'heo-to-wc-product-importer' ),
+            'parent_item'       => __( 'Parent Type', 'heo-to-wc-product-importer' ),
+            'parent_item_colon' => __( 'Parent Type:', 'heo-to-wc-product-importer' ),
+            'edit_item'         => __( 'Edit Type', 'heo-to-wc-product-importer' ),
+            'update_item'       => __( 'Update Type', 'heo-to-wc-product-importer' ),
+            'add_new_item'      => __( 'Add New Type', 'heo-to-wc-product-importer' ),
+            'new_item_name'     => __( 'New Type Name', 'heo-to-wc-product-importer' ),
+            'menu_name'         => __( 'Type', 'heo-to-wc-product-importer' ),
         ];
 
         $args_product_type = [
@@ -99,24 +99,24 @@ trait HEO_WC_Product_setup{
     public function heo_add_custom_product_field_for_general() {
         woocommerce_wp_checkbox([
             'id'          => '_enable_price_lock',
-            'label'       => __('Price Lock', 'heo-woo-importer'),
-            'description' => __('Check this to use custom price.', 'heo-woo-importer'),
+            'label'       => __('Price Lock', 'heo-to-wc-product-importer'),
+            'description' => __('Check this to use custom price.', 'heo-to-wc-product-importer'),
         ]);
 
         woocommerce_wp_text_input([
             'id'          => '_server_regular_price',
-            'label'       => __('Server Regular Price', 'heo-woo-importer'),
+            'label'       => __('Server Regular Price', 'heo-to-wc-product-importer'),
             'desc_tip'    => true,
-            'description' => __('This Price Will autometically come from server. Override if it\'s not comming.', 'heo-woo-importer'),
+            'description' => __('This Price Will autometically come from server. Override if it\'s not comming.', 'heo-to-wc-product-importer'),
             'type'        => 'number',
             'placeholder' => 'Price will come from server'
         ]);
 
         woocommerce_wp_text_input([
             'id'          => '_server_sale_price',
-            'label'       => __('Server Sale Price', 'heo-woo-importer'),
+            'label'       => __('Server Sale Price', 'heo-to-wc-product-importer'),
             'desc_tip'    => true,
-            'description' => __('This Price Will autometically come from server. Override if it\'s not comming.', 'heo-woo-importer'),
+            'description' => __('This Price Will autometically come from server. Override if it\'s not comming.', 'heo-to-wc-product-importer'),
             'type'        => 'number',
             'placeholder' => 'Price will come from server'
         ]);
@@ -124,18 +124,18 @@ trait HEO_WC_Product_setup{
         // Preorder functionality
         woocommerce_wp_text_input([
             'id'          => '_preorder_deadline',
-            'label'       => __('Preorder Deadline', 'heo-woo-importer'),
+            'label'       => __('Preorder Deadline', 'heo-to-wc-product-importer'),
             'desc_tip'    => true,
-            'description' => __('Select the deadline date for preorders.', 'heo-woo-importer'),
+            'description' => __('Select the deadline date for preorders.', 'heo-to-wc-product-importer'),
             'type'        => 'date',
         ]);
 
         // ETA
         woocommerce_wp_text_input([
             'id'          => '_eta_deadline',
-            'label'       => __('ETA Deadline', 'heo-woo-importer'),
+            'label'       => __('ETA Deadline', 'heo-to-wc-product-importer'),
             'desc_tip'    => true,
-            'description' => __('Select the deadline date for ETA.', 'heo-woo-importer'),
+            'description' => __('Select the deadline date for ETA.', 'heo-to-wc-product-importer'),
             'type'        => 'date',
         ]);
 
@@ -145,9 +145,9 @@ trait HEO_WC_Product_setup{
 
         woocommerce_wp_text_input([
             'id'          => '_last_update',
-            'label'       => __('Last Update', 'heo-woo-importer'),
+            'label'       => __('Last Update', 'heo-to-wc-product-importer'),
             'desc_tip'    => true,
-            'description' => __('Product Last update Time and date.', 'heo-woo-importer'),
+            'description' => __('Product Last update Time and date.', 'heo-to-wc-product-importer'),
             'type'        => 'text',
             'value'             => $readable, 
             'custom_attributes' => ['disabled' => 'disabled'],
@@ -157,15 +157,15 @@ trait HEO_WC_Product_setup{
     public function heo_add_custom_product_field_for_inventory() {
         woocommerce_wp_text_input([
             'id'          => '_product_barcode_type',
-            'label'       => __('Barcode Type', 'heo-woo-importer'),
+            'label'       => __('Barcode Type', 'heo-to-wc-product-importer'),
             'desc_tip'    => true,
-            'description' => __('Enter the product barcode type.', 'heo-woo-importer'),
+            'description' => __('Enter the product barcode type.', 'heo-to-wc-product-importer'),
         ]);
         woocommerce_wp_text_input([
             'id'          => '_product_barcode',
-            'label'       => __('Product Barcode', 'heo-woo-importer'),
+            'label'       => __('Product Barcode', 'heo-to-wc-product-importer'),
             'desc_tip'    => true,
-            'description' => __('Enter the product barcode.', 'heo-woo-importer'),
+            'description' => __('Enter the product barcode.', 'heo-to-wc-product-importer'),
         ]);
     }
 
@@ -195,7 +195,7 @@ trait HEO_WC_Product_setup{
         ?>
         <tr class="form-field">
             <th scope="row">
-                <label><?php esc_html_e('Price Range Multipliers', 'heo-woo-importer'); ?></label>
+                <label><?php esc_html_e('Price Range Multipliers', 'heo-to-wc-product-importer'); ?></label>
             </th>
             <td>
                 <p class="description" style="margin-top:0">

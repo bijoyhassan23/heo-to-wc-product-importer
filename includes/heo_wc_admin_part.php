@@ -211,6 +211,10 @@ trait HEO_WC_Admin_part{
     }
 
     public function handle_product_manual_sync(){
+        if(as_next_scheduled_action( 'heo_wc_seed_page')){
+            $this->log('Existing sync job found and cleared.');
+            as_unschedule_all_actions( 'heo_wc_seed_page' );
+        }
         $this->log('Manual sync triggered by user.');
         $this->seed_page_job(1);
         wp_safe_redirect(add_query_arg(['page'=>self::PAGE_SLUG], admin_url('admin.php'))); 

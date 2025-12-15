@@ -6,7 +6,7 @@
  * Author: Bijoy
  * Author URI: https://bijoy.dev
  * Requires Plugins: woocommerce
- * Text Domain: heo-woo-importer
+ * Text Domain: heo-to-wc-product-importer
  * License: GPL v2 or later
  */
 
@@ -47,7 +47,8 @@ class HEO_WC_Importer {
     const DAILY_CHECK_SCHEDULAR = 'heo_wc_regular_seed_page';
     const EACH_REGULAR_SYNC = 'heo_wc_regular_each_seed_page';
 
-    use HEO_WC_General_function, HEO_WC_Admin_part, HEO_WC_Stock_status, HEO_WC_Product_setup, HEO_WC_Product_upload;
+    use HEO_WC_General_function, HEO_WC_Admin_part, HEO_WC_Stock_status, HEO_WC_Product_setup, HEO_WC_Product_upload, HEO_WC_Single_Product_Sync;
+    use HEO_WC_handle_redundant_code;
     public function __construct() {
 
         $this->general_function_init();
@@ -69,6 +70,8 @@ class HEO_WC_Importer {
 
         // Stock status added
         $this->stock_status_init();
+
+        $this->single_product_sync_init();
     }
 
     public function seed_page_job($page = 1){
@@ -187,6 +190,14 @@ class HEO_WC_Importer {
         $price = (int) $price;
 
         $product_id = $product_obj->get_id();
+
+        // depricated code check start
+        $last_sync = get_post_meta($product_id, '_last_update', true);
+        if(!$last_sync){
+            $depricated_price = $this->custom_dynamic_price_depricated($price, $product_obj);
+            return $depricated_price;
+        }
+        // depricated code check end
 
         // give discount by preorder
         $preorderDeadline = get_post_meta( $product_id, '_preorder_deadline', true );
