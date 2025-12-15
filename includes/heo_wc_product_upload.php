@@ -284,6 +284,7 @@ trait HEO_WC_Product_upload{
         $product->set_description($description);
         $product->set_status('publish');
         $product->set_category_ids( $categories );
+        $product->set_stock_status('outofstock');
 
         if($barcodes){
             foreach($barcodes as $barcode){
