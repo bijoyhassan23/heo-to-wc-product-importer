@@ -11,8 +11,8 @@ trait HEO_WC_Stock_status{
 
     // Add custom stock statuses to WooCommerce
     public function add_custom_stock_status($status_options) {
-        $status_options['at_supplier'] = __('At Supplier', 'woocommerce');
-        $status_options['preorder'] = __('Pre Order', 'woocommerce');
+        $status_options['at_supplier'] = __('At Supplier', 'heo-woo-importer');
+        $status_options['preorder'] = __('Pre Order', 'heo-woo-importer');
         return $status_options;
     }
 
@@ -28,9 +28,9 @@ trait HEO_WC_Stock_status{
     public function display_correct_label($availability, $product) {
         $status = $product->get_stock_status();
         if ($status === 'at_supplier') {
-            $availability = __('Available at Supplier', 'woocommerce');
+            $availability = __('Available at Supplier', 'heo-woo-importer');
         } elseif ($status === 'preorder') {
-            $availability = __('Pre Order Now', 'woocommerce');
+            $availability = __('Pre Order Now', 'heo-woo-importer');
         }
         return $availability;
     }
@@ -52,8 +52,8 @@ trait HEO_WC_Stock_status{
 
         // Map your custom statuses to readable text
         $custom_labels = [
-            'at_supplier' => __('At Supplier', 'woocommerce'),
-            'preorder'    => __('Pre Order', 'woocommerce'),
+            'at_supplier' => __('At Supplier', 'heo-woo-importer'),
+            'preorder'    => __('Pre Order', 'heo-woo-importer'),
         ];
 
         if (isset($custom_labels[$status])) {

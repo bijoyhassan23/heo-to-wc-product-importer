@@ -1,14 +1,16 @@
 <?php
 /**
- * Plugin Name: heo → WooCommerce Importer
- * Description: Imports & syncs products.
+ * Plugin Name: HEO Importer for woocommerce
+ * Description: Imports & syncs products
  * Version: 6.0.0
  * Author: Bijoy
  * Author URI: https://bijoy.dev
  * Requires Plugins: woocommerce
+ * Text Domain: heo-woo-importer
+ * License: GPL v2 or later
  */
 
-if ( ! defined('ABSPATH') ) exit;
+defined('ABSPATH') or exit;
 
 define('HEO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('HEO_PLUGIN_URL', plugin_dir_url( __FILE__ ));

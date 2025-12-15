@@ -244,6 +244,8 @@ trait HEO_WC_Product_upload{
             $this->log('Availability update error for product ID '.$product_id.' : '.$e->getMessage());
         }
 
+        if($update_message['price_updated'] || $update_message['availability_updated']) update_post_meta($product_id, '_last_update', time());
+        
         return $update_message;
     }
 
