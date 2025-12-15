@@ -190,6 +190,7 @@ class HEO_WC_Importer {
         $price = (int) $price;
 
         $product_id = $product_obj->get_id();
+        if(!$product_id) return $price;
 
         // depricated code check start
         $last_sync = get_post_meta($product_id, '_last_update', true);
