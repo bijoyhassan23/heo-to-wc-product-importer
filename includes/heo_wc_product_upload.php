@@ -215,36 +215,38 @@ trait HEO_WC_Product_upload{
 
         try{
             if($sync === 'both' || $sync === 'availability'){
-                if(empty($availability_info)){
-                    if(!$sku) $sku = get_post_meta( $product_id, '_sku', true );
-                    $availability_info = $this->api_get_info([ 'sku' => $sku, 'api_type' => 'availabilities']);
-                    if($availability_info && !empty($availability_info['content'])){
-                        $availability_info = $availability_info['content'][0];
-                    }else{
-                        $this->log('No availability info found for SKU '.$sku);
-                        $availability_info = ['availabilityState' => '', 'availableToOrder' => false, 'eta' => null, 'availability' => null];
-                    }
-                }
-
-                ['availableToOrder' => $availableToOrder, 'eta' => $eta, 'availabilityState' => $availabilityState] = $availability_info;
                 $current_stock_status = trim(get_post_meta($product_id, '_stock_status', true));
-                $currnet_eta = trim(get_post_meta( $product_id, '_eta_deadline', true ));
-                $preorderDeadline = trim(get_post_meta( $product_id, '_preorder_deadline', true ));
-                $eta = $eta ? trim($eta) : "";
-                $availabilityState = $availabilityState ? trim($availabilityState) : "";
+                if($current_stock_status != "instock"){
+                    if(empty($availability_info)){
+                        if(!$sku) $sku = get_post_meta( $product_id, '_sku', true );
+                        $availability_info = $this->api_get_info([ 'sku' => $sku, 'api_type' => 'availabilities']);
+                        if($availability_info && !empty($availability_info['content'])){
+                            $availability_info = $availability_info['content'][0];
+                        }else{
+                            $this->log('No availability info found for SKU '.$sku);
+                            $availability_info = ['availabilityState' => '', 'availableToOrder' => false, 'eta' => null, 'availability' => null];
+                        }
+                    }
 
-                if(($preorderDeadline && (strtotime($preorderDeadline) > time())) || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
-                    $query_stock_status = 'preorder';
-                }elseif($availabilityState === 'AVAILABLE' && $availableToOrder){
-                    $query_stock_status = 'at_supplier';
-                }else{
-                    $query_stock_status = 'outofstock';
-                }
+                    ['availableToOrder' => $availableToOrder, 'eta' => $eta, 'availabilityState' => $availabilityState] = $availability_info;
+                    $currnet_eta = trim(get_post_meta( $product_id, '_eta_deadline', true ));
+                    $preorderDeadline = trim(get_post_meta( $product_id, '_preorder_deadline', true ));
+                    $eta = $eta ? trim($eta) : "";
+                    $availabilityState = $availabilityState ? trim($availabilityState) : "";
 
-                if(!($current_stock_status === $query_stock_status && $currnet_eta === $eta)){
-                    if($query_stock_status) wc_update_product_stock_status( $product_id, $query_stock_status );
-                    if($eta) update_post_meta($product_id, '_eta_deadline', $eta);
-                    $update_message['availability_updated'] = true;
+                    if(($preorderDeadline && (strtotime($preorderDeadline) > time())) || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
+                        $query_stock_status = 'preorder';
+                    }elseif($availabilityState === 'AVAILABLE' && $availableToOrder){
+                        $query_stock_status = 'at_supplier';
+                    }else{
+                        $query_stock_status = 'outofstock';
+                    }
+
+                    if(!($current_stock_status === $query_stock_status && $currnet_eta === $eta)){
+                        if($query_stock_status) wc_update_product_stock_status( $product_id, $query_stock_status );
+                        if($eta) update_post_meta($product_id, '_eta_deadline', $eta);
+                        $update_message['availability_updated'] = true;
+                    }
                 }
             }
         }catch(Exception $e){
