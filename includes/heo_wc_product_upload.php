@@ -230,8 +230,8 @@ trait HEO_WC_Product_upload{
                 $current_stock_status = trim(get_post_meta($product_id, '_stock_status', true));
                 $currnet_eta = trim(get_post_meta( $product_id, '_eta_deadline', true ));
                 $preorderDeadline = trim(get_post_meta( $product_id, '_preorder_deadline', true ));
-                $eta = trim($eta);
-                $availabilityState = trim($availabilityState);
+                $eta = $eta ? trim($eta) : "";
+                $availabilityState = $availabilityState ? trim($availabilityState) : "";
 
                 if(($preorderDeadline && (strtotime($preorderDeadline) > time())) || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
                     $query_stock_status = 'preorder';
