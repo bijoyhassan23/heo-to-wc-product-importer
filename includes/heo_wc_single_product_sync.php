@@ -17,6 +17,6 @@ trait HEO_WC_Single_Product_Sync {
         }
         $sku = $product->get_sku();
         $this->product_stock_and_price_update(['product_id' => $product_id, 'sku' => $sku, 'sync' => 'both']);
-        $this->log('Single product sync for product ID '.$product_id);
+        $this->log('Single product sync for product ID '.$product_id .' with SKU '.$sku);
     }
 }

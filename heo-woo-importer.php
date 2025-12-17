@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HEO Importer for woocommerce
  * Description: Imports & syncs products
- * Version: 6.0.0
+ * Version: 6.0.1
  * Author: Bijoy
  * Author URI: https://bijoy.dev
  * Requires Plugins: woocommerce
@@ -14,7 +14,7 @@ defined('ABSPATH') or exit;
 
 define('HEO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('HEO_PLUGIN_URL', plugin_dir_url( __FILE__ ));
-define('HEO_PLUGIN_VERSION', '6.0.0');
+define('HEO_PLUGIN_VERSION', '6.0.1');
 
 // Include necessary files
 spl_autoload_register(function ($class_name) {
@@ -151,7 +151,8 @@ class HEO_WC_Importer {
         }
 
         $next_page = $page + 1;
-        if ( !as_next_scheduled_action(self::EACH_REGULAR_SYNC, [$next_page]) && $response['pagination']['totalPages'] >= $next_page) {
+        $total_pages = $response['pagination']['totalPages'] ?? 0;
+        if ( !as_next_scheduled_action(self::EACH_REGULAR_SYNC, [$next_page]) && $total_pages >= $next_page) {
             return $next_page;
         }else{
             return false;
@@ -179,7 +180,8 @@ class HEO_WC_Importer {
         }
 
         $next_page = $page + 1;
-        if ( !as_next_scheduled_action(self::EACH_REGULAR_SYNC, [$next_page]) && $response['pagination']['totalPages'] >= $next_page) {
+        $total_pages = $response['pagination']['totalPages'] ?? 0;
+        if ( !as_next_scheduled_action(self::EACH_REGULAR_SYNC, [$next_page]) && $total_pages >= $next_page) {
             return $next_page;
         }else{
             return false;

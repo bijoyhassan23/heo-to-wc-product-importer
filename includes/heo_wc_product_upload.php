@@ -63,13 +63,36 @@ trait HEO_WC_Product_upload{
             }
         }
         
-        update_post_meta($product_id, '_regular_price', round($server_regular_price * $multiplyer));
+        update_post_meta($product_id, '_regular_price',  $this->round_price($server_regular_price * $multiplyer));
         if($server_sale_price){
-            update_post_meta($product_id, '_sale_price', round($server_sale_price * $multiplyer));
-            update_post_meta($product_id, '_price', round($server_sale_price * $multiplyer));
+            update_post_meta($product_id, '_sale_price', $this->round_price($server_sale_price * $multiplyer));
+            update_post_meta($product_id, '_price', $this->round_price($server_sale_price * $multiplyer));
         }else{
-            update_post_meta($product_id, '_price', round($server_regular_price * $multiplyer));
+            update_post_meta($product_id, '_price', $this->round_price($server_regular_price * $multiplyer));
             update_post_meta($product_id, '_sale_price', '');
+        }
+    }
+
+    private function round_price($price) {
+        if ($price <= 0) {
+            return 0;
+        }
+
+        $whole = floor($price);
+        $decimal = $price - $whole;
+
+        if ($decimal <= 0.00) {
+            return $whole;
+        } elseif ($decimal <= 0.25) {
+            return $whole + 0.25;
+        } elseif ($decimal <= 0.50) {
+            return $whole + 0.50;
+        } elseif ($decimal <= 0.75) {
+            return $whole + 0.75;
+        } elseif ($decimal <= 0.90) {
+            return $whole + 0.90;
+        } else {
+            return $whole + 1.00;
         }
     }
 
@@ -190,10 +213,10 @@ trait HEO_WC_Product_upload{
                 $current_regular_price = get_post_meta($product_id, '_server_regular_price', true);
                 $current_sale_price = get_post_meta($product_id, '_server_sale_price', true);
 
-                if($strike_price) $strike_price = (int) $strike_price;
-                if($base_price) $base_price = (int) $base_price;
-                if($current_regular_price) $current_regular_price = (int) $current_regular_price;
-                if($current_sale_price) $current_sale_price = (int) $current_sale_price;
+                if($strike_price) $strike_price = (float) $strike_price;
+                if($base_price) $base_price = (float) $base_price;
+                if($current_regular_price) $current_regular_price = (float) $current_regular_price;
+                if($current_sale_price) $current_sale_price = (float) $current_sale_price;
 
                 if($strike_price && $base_price && ($strike_price != $current_regular_price || $base_price != $current_sale_price)){
                     update_post_meta($product_id, '_server_regular_price', $strike_price);
@@ -203,7 +226,7 @@ trait HEO_WC_Product_upload{
                     update_post_meta($product_id, '_server_regular_price', $base_price);  
                     $update_message['price_updated'] = true;              
                 }elseif($price && $price != $current_regular_price){
-                    update_post_meta($product_id, '_server_regular_price', $price);   
+                    update_post_meta($product_id, '_server_regular_price', $price);
                     $update_message['price_updated'] = true;         
                 }
 
@@ -216,7 +239,8 @@ trait HEO_WC_Product_upload{
         try{
             if($sync === 'both' || $sync === 'availability'){
                 $current_stock_status = trim(get_post_meta($product_id, '_stock_status', true));
-                if($current_stock_status != "instock"){
+                $stock_lock = trim(get_post_meta($product_id, '_enable_stock_lock', true));
+                if($current_stock_status != "instock" && $stock_lock != 'yes'){
                     if(empty($availability_info)){
                         if(!$sku) $sku = get_post_meta( $product_id, '_sku', true );
                         $availability_info = $this->api_get_info([ 'sku' => $sku, 'api_type' => 'availabilities']);

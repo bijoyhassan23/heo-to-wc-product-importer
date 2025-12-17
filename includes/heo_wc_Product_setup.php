@@ -155,6 +155,11 @@ trait HEO_WC_Product_setup{
     }
 
     public function heo_add_custom_product_field_for_inventory() {
+        woocommerce_wp_checkbox([
+            'id'          => '_enable_stock_lock',
+            'label'       => __('Stock Lock', 'heo-to-wc-product-importer'),
+            'description' => __('Check this to don\'t want to sync the stock', 'heo-to-wc-product-importer'),
+        ]);
         woocommerce_wp_text_input([
             'id'          => '_product_barcode_type',
             'label'       => __('Barcode Type', 'heo-to-wc-product-importer'),
@@ -178,6 +183,7 @@ trait HEO_WC_Product_setup{
         if (isset($_POST['_product_barcode']))      $product->update_meta_data('_product_barcode', sanitize_text_field($_POST['_product_barcode']));
 
         $product->update_meta_data('_enable_price_lock', isset($_POST['_enable_price_lock']) ? 'yes' : 'no');
+        $product->update_meta_data('_enable_stock_lock', isset($_POST['_enable_stock_lock']) ? 'yes' : 'no');
         $product->update_meta_data('_last_update', time());
         $this->product_price_calculator($product->get_id());
     }
