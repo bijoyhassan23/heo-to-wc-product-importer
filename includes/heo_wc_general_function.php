@@ -78,6 +78,3 @@ trait HEO_WC_General_function{
         return $columns;
     }
 }
-
-
-

@@ -9,8 +9,9 @@ trait HEO_WC_handle_redundant_code{
         $product = wc_get_product( $product_id );
         $brands = wp_get_post_terms($product_id, 'product_brand');
 
-        $regular_price = $product->get_regular_price();
-        $sale_price = $product->get_sale_price();
+        $regular_price = (float) $product->get_regular_price();
+        $sale_price = (float) $product->get_sale_price();
+		$price = (float) $price;
 
         // Update price by brand
         if(!empty($brands) && isset($brands[0]->name)){

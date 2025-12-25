@@ -141,7 +141,7 @@ trait HEO_WC_Product_setup{
 
         global $post;
         $timestamp = get_post_meta($post->ID, '_last_update', true);
-        $readable = $timestamp ? date('Y-m-d H:i:s', $timestamp) : '—';
+        $readable = $timestamp ? round(((time() - $timestamp) / 60) * 10) / 10 . ' minutes ago' : '—';
 
         woocommerce_wp_text_input([
             'id'          => '_last_update',
@@ -332,5 +332,6 @@ trait HEO_WC_Product_setup{
         } else {
             delete_term_meta($term_id, $meta_key);
         }
+		update_option('heo_last_update_setting', time());
     }
 }

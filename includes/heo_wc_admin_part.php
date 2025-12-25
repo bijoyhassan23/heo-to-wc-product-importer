@@ -193,6 +193,7 @@ trait HEO_WC_Admin_part{
     }
 
     public function sanitize_settings($opts) {
+        update_option('heo_last_update_setting', time());
         $defaults = [
             'environment'     => 'sandbox',
             'username'        => '',

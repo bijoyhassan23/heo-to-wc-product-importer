@@ -42,8 +42,8 @@ trait HEO_WC_Product_upload{
         $price_lock = get_post_meta($product_id, '_enable_price_lock', true);
         if($price_lock === 'yes') return;
         
-        $server_regular_price = (int) get_post_meta($product_id, '_server_regular_price', true);
-        $server_sale_price = (int) get_post_meta($product_id, '_server_sale_price', true);
+        $server_regular_price = (float) get_post_meta($product_id, '_server_regular_price', true);
+        $server_sale_price = (float) get_post_meta($product_id, '_server_sale_price', true);
         $brands = wp_get_post_terms($product_id, 'product_brand');
         $multiplyer = false;
 
@@ -62,6 +62,9 @@ trait HEO_WC_Product_upload{
                 $multiplyer = $this->update_price_from_array_multiplyer($server_regular_price, $default_ranges);
             }
         }
+
+        if(!$multiplyer || $multiplyer <= 0) $multiplyer = 1;
+        if(!$server_regular_price || $server_regular_price <= 0) return;
         
         update_post_meta($product_id, '_regular_price',  $this->round_price($server_regular_price * $multiplyer));
         if($server_sale_price){
@@ -155,7 +158,11 @@ trait HEO_WC_Product_upload{
         }
         $image_ids = [];
         foreach($image_urls as $image_url){
-            $url = $image_url['url'];
+            $url = $image_url['url'] ?? null;
+			if(!$url){
+				$this->log('Image URL Not Found, product ID'.$product_id);
+				continue;
+			}
             $attachment_id = media_sideload_image($url, $product_id, null, 'id');
             if ( is_wp_error( $attachment_id ) ){
                 $this->log('Image Upload fail, product ID'.$product_id.' url : '.$url);
@@ -194,8 +201,13 @@ trait HEO_WC_Product_upload{
         if(!$product_id) return false;
         $update_message = [
             'price_updated' => false,
-            'availability_updated' => false
+			'price_check' => false,
+            'price_api_status' => false,
+            'availability_updated' => false,
+            'availability_check' => false,
+            'availability_api_status' => false
         ];
+        $last_update_setting = (int) get_option('heo_last_update_setting', null);
         try{
             if($sync === 'both' || $sync === 'price'){
                 if(empty($price_info)){
@@ -203,10 +215,13 @@ trait HEO_WC_Product_upload{
                     $price_info = $this->api_get_info([ 'sku' => $sku, 'api_type' => 'prices']);
                     if($price_info && !empty($price_info['content'])){
                         $price_info = $price_info['content'][0];
+                        $update_message['price_api_status'] = true;
                     }else{
                         $this->log('No Price info found for SKU '.$sku);
                         $price_info = [ 'basePricePerUnit' => ['amount'=> null], 'strikePricePerUnit' => null, 'discountedPricePerUnit' => ['amount'=> null] ];
                     }
+                }else{
+                    $update_message['price_api_status'] = true;
                 }
                 $strike_price  = $price_info['strikePricePerUnit']['amount'] ?? null;
                 $base_price    = $price_info['basePricePerUnit']['amount'] ?? null;
@@ -229,8 +244,9 @@ trait HEO_WC_Product_upload{
                     update_post_meta($product_id, '_server_regular_price', $price);
                     $update_message['price_updated'] = true;         
                 }
-
-                if($update_message['price_updated']) $this->product_price_calculator($product_id);
+                $update_message['price_check'] = true;
+                $is_setting_update = ($last_update_setting && $update_message['price_api_status']) ? (time() - $last_update_setting) < 259200 : false;
+                if($update_message['price_updated'] || $is_setting_update) $this->product_price_calculator($product_id);
             }
         }catch(Exception $e){
             $this->log('Price update error for product ID '.$product_id.' : '.$e->getMessage());
@@ -246,10 +262,13 @@ trait HEO_WC_Product_upload{
                         $availability_info = $this->api_get_info([ 'sku' => $sku, 'api_type' => 'availabilities']);
                         if($availability_info && !empty($availability_info['content'])){
                             $availability_info = $availability_info['content'][0];
+                            $update_message['availability_api_status'] = true;
                         }else{
                             $this->log('No availability info found for SKU '.$sku);
                             $availability_info = ['availabilityState' => '', 'availableToOrder' => false, 'eta' => null, 'availability' => null];
                         }
+                    }else{
+                        $update_message['availability_api_status'] = true;
                     }
 
                     ['availableToOrder' => $availableToOrder, 'eta' => $eta, 'availabilityState' => $availabilityState] = $availability_info;
@@ -258,27 +277,34 @@ trait HEO_WC_Product_upload{
                     $eta = $eta ? trim($eta) : "";
                     $availabilityState = $availabilityState ? trim($availabilityState) : "";
 
-                    if(($preorderDeadline && (strtotime($preorderDeadline) > time())) || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
-                        $query_stock_status = 'preorder';
-                    }elseif($availabilityState === 'AVAILABLE' && $availableToOrder){
-                        $query_stock_status = 'at_supplier';
+					if(strtotime($preorderDeadline) < time()) update_post_meta($product_id, '_preorder_deadline', "");
+					if($update_message['availability_api_status']){
+                        if(($preorderDeadline && (strtotime($preorderDeadline) > time())) || (($availabilityState === 'PREORDER' || $availabilityState === 'INCOMING') && $availableToOrder && $eta)){
+                            $query_stock_status = 'preorder';
+                        }elseif($availabilityState === 'AVAILABLE' && $availableToOrder){
+                            $query_stock_status = 'at_supplier';
+                        }else{
+                            $query_stock_status = 'outofstock';
+                        }
                     }else{
                         $query_stock_status = 'outofstock';
                     }
 
+
                     if(!($current_stock_status === $query_stock_status && $currnet_eta === $eta)){
                         if($query_stock_status) wc_update_product_stock_status( $product_id, $query_stock_status );
-                        if($eta) update_post_meta($product_id, '_eta_deadline', $eta);
+                        if($eta) update_post_meta($product_id, '_eta_deadline', $eta ? $eta : '');
                         $update_message['availability_updated'] = true;
                     }
+					$update_message['availability_check'] = true;
                 }
             }
         }catch(Exception $e){
             $this->log('Availability update error for product ID '.$product_id.' : '.$e->getMessage());
         }
 
-        if($update_message['price_updated'] || $update_message['availability_updated']) update_post_meta($product_id, '_last_update', time());
-        
+        if($update_message['price_check'] || $update_message['availability_check']) update_post_meta($product_id, '_last_update', time());
+
         return $update_message;
     }
 

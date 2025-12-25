@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HEO Importer for woocommerce
  * Description: Imports & syncs products
- * Version: 6.0.1
+ * Version: 6.0.2
  * Author: Bijoy
  * Author URI: https://bijoy.dev
  * Requires Plugins: woocommerce
@@ -42,7 +42,7 @@ class HEO_WC_Importer {
 
     const AS_GROUP   = 'heo_wc_importer_queue';
     const AS_SPACING = 10;
-    const BATCH = 5;
+    const BATCH = 50;
 
     const DAILY_CHECK_SCHEDULAR = 'heo_wc_regular_seed_page';
     const EACH_REGULAR_SYNC = 'heo_wc_regular_each_seed_page';
@@ -83,9 +83,13 @@ class HEO_WC_Importer {
                 if(empty($each_product['productNumber']) || wc_get_product_id_by_sku($each_product['productNumber'])) continue;
                 $minifyed_data = $this->minify_product_payload($each_product);
                 if ( !as_next_scheduled_action( 'heo_wc_import_single', $minifyed_data ) ) {
-                    as_schedule_single_action( time() + self::AS_SPACING * $i, 'heo_wc_import_single', [$minifyed_data],  self::AS_GROUP);
-                    // $this->log('new Product Shecduleed: '. $i);
-                    $i++;
+					if(strlen(json_encode($minifyed_data)) < 8000){
+						as_schedule_single_action( time() + self::AS_SPACING * $i, 'heo_wc_import_single', [$minifyed_data],  self::AS_GROUP);
+						// $this->log('new Product Shecduleed: '. $i);
+						$i++;
+					}else{
+						$this->upsert_product($minifyed_data);
+					}
                 }
             }    
         }else{
@@ -189,7 +193,7 @@ class HEO_WC_Importer {
     }
 
     public function custom_dynamic_price($price, $product_obj) {
-        $price = (int) $price;
+        $price = (float) $price;
 
         $product_id = $product_obj->get_id();
         if(!$product_id) return $price;
@@ -209,7 +213,7 @@ class HEO_WC_Importer {
             $deadline = new DateTime($preorderDeadline);
             $now = new DateTime('now');
             if ($deadline > $now){
-                $discount = (int)$o['pre_order_discount'];
+                $discount = (float) $o['pre_order_discount'];
                 $price = round($price - ($price * ($discount / 100)));
                 $product_obj->set_sale_price( $price );
             }
@@ -230,9 +234,11 @@ class HEO_WC_Importer {
 
         if(empty($product_data['productNumber'])) return;
         $minifyed_data = $this->minify_product_payload($product_data);
-        if ( !as_next_scheduled_action( 'heo_wc_import_single', $minifyed_data ) ) {
+        if ( !as_next_scheduled_action( 'heo_wc_import_single', $minifyed_data ) && strlen(json_encode($minifyed_data)) < 8000 ) {
             as_schedule_single_action( time() + self::AS_SPACING, 'heo_wc_import_single', [$minifyed_data],  self::AS_GROUP);
-        }
+        }else{
+			$this->upsert_product($minifyed_data);
+		}
         return true;
     }
 

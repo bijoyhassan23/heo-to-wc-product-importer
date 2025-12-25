@@ -65,9 +65,3 @@ trait HEO_WC_Stock_status{
         return $stock_html;
     }
 }
-
-
-
-
-
-
