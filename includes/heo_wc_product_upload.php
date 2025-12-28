@@ -336,6 +336,8 @@ trait HEO_WC_Product_upload{
         $product->set_category_ids( $categories );
         $product->set_stock_status('outofstock');
 
+        if($preorderDeadline) $product->update_meta_data('_preorder_deadline', $preorderDeadline);
+
         if($barcodes){
             foreach($barcodes as $barcode){
                 if($barcode['type'] && $barcode['barcode']){
